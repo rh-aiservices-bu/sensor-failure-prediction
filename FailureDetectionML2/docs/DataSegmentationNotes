@@ -1,9 +1,0 @@
-
-  Data Start                                                            fail[0]                            fail[1] ..........................
-     |                                                                      |                                   |
-     |                                                                      |                                   |
-     |                  validation data                                       |      test data                     |     train data..........
-                                                                          fail[0] + 2h                        fail[1] + 2h
-
-                  |      set alarm = 2                                     |   discard   |    set alarm = 2    |  discard...
-               fail[0]-start_offset                             fail[0]-end_offset   fail[1]-start_offset    fail[1]-end_offset
