@@ -1,0 +1,14 @@
+/data_prep_train_non_gui.py
+/plot1.html
+/plot_test.py
+/plotlytest1.py
+/plotlytest2.py
+/plotlytest3.py
+/sensor_plot.py
+/test_val_non_gui.py
+/dataprep/data_preparation_OLD.py
+/dataprep/initial_data_prep.py
+/experiments/
+/static/sensor_data_npy/
+/static/energydata_complete.csv
+/static/sensor.csv
