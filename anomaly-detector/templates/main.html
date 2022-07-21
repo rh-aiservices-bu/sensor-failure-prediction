@@ -11,214 +11,81 @@
 </head>
 <body>
     <div class="mainDiv">
-        <h3>Failure Prediction</h3>
+        <h3>Anomaly Detection</h3>
         <!-- Tab links -->
         <div class="tab">
-            <button id="dataPrepBtnBtn" class="tablinks" onclick="openTab(this, 'tab1')">Data Prep</button>
-            <button id="trainBtn" class="tablinks" onclick="openTab(this, 'tab2')">Train Model</button>
-            <button id="testBtn" class="tablinks" onclick="openTab(this, 'tab3')">Test Model</button>
+            <button id="PostgresBtn" class="tablinks" onclick="openTab(this, 'tab1')">Connect to a Postgres Database</button>
+            <button id="CsvBtn" class="tablinks" onclick="openTab(this, 'tab2')">Import your own .csv file</button>
+            <button id="GenerateDataBtn" class="tablinks" onclick="openTab(this, 'tab3')">Generate Synthetic Data</button>
 
         </div>
 
         <!-- Tab content -->
         <div id="tab1" class="tabcontent">
-            <h3>Data Preparation</h3>
-            <div class="prepContainer">
-                <fieldset class="spanTwoCols">
-                    <legend> Data Preparation Action</legend>
-                    <div id="prepBtnContainer" class="spanTwoCols">
-                        <button id="startBtn">Start Data Prep</button>
-                        <button id="stopBtn">Stop Data Prep</button>
+            <h3>Connect to a Postgres Database</h3>
+            <div class="postgresContainer">
+                <form id="displayForm" method="post">
+                    {% for col in col_list %}
+                        <label>
+                            <input type="radio" name="sensor_list" value='{{col}}'/>{{col}}
+                        </label>
+                    {% endfor %}
+                    <div class="displayContainer">
+                        <fieldset>
+                            <legend>Data Output</legend>
+                            <div class="dataMsg" id="dataMsgId"></div>
+                            <div id="graphBtnContainer" >
+                                <input type="button" id="graphBtn" value="Graph Model">
+                            </div>
+                        </fieldset>
+                        <iframe id="graphIFrame" class="graphIFrame">Generating Graph...</iframe>
                     </div>
-                    <div id="progressContainer" class="spanTwoCols">
-                        <progress id="progressBar" value="0"></progress>
-                    </div>
-                    <div class="progressText" id="progressText"></div>
-                </fieldset>
-                <div class="scrollTable" >
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Col Name</th>
-                                <th>Sum Nulls</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            {% for indx, val in nulls_series.items() %}
-                                <tr>
-                                    <td>{{indx}}</td>
-                                    <td>{{val}}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="scrollTable">
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Dropped Cols</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for col in bad_cols %}
-                            <tr>
-                                <td>{{col}}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="scrollTable">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Sensor Name</th>
-                                <th>Ranked Variance</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in ranked_features %}
-                                <tr>
-                                    <td>{{row[0]}}</td>
-                                    <td>{{'%0.1f'| format(row[1]*100|float)}}%</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="scrollTable">
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Features In Model</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for col in features_in_model %}
-                            <tr>
-                                <td>{{col}}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                </form>
             </div>
         </div>
 
         <div id="tab2" class="tabcontent">
-            <h3>Model Training</h3>
-            <form id="trainForm" method="post">
-                <div class="trainContainer">
-                    <fieldset>
-                        <legend>Training Action</legend>
-
-                        <div class="trainMsg" id="trainMsgId">  </div>
-                        <div id="trainBtnContainer" >
-                            <input type="button" id="trainingBtn" value="Train Model">
-                            <!--<div id="progressTrainContainer">
-                                <progress id="trainProgress" value="0"></progress>
+            <h3>Upload a CSV file</h3>
+            <div class="csvContainer">
+                <form id="csvForm" method="post">
+                    
+                    <div class="displayContainer">
+                        <fieldset>
+                            <legend>Data Output</legend>
+                            <div class="dataMsg" id="dataMsgId"></div>
+                            <div id="graphBtnContainer" >
+                                <input type="button" id="graphBtn" value="Graph Model">
                             </div>
-                            <div id="trainProgressText"></div>-->
-                        </div>
-                    </fieldset>
-                    <fieldset>
-                        <legend>Select Training Parameters</legend>
-                        <div class="trainLeft">
-                            <label for="epochsSelect">Epochs</label>
-                            <select id="epochsSelect" name="epochsSelect">
-                                <option value="10">10</option>
-                                <option value="20">20</option>
-                                <option value="30">30</option>
-                                <option value="40">40</option>
-                                <option value="50" selected>50</option>
-                                <option value="60">60</option>
-                            </select>
-                        </div>
-                        <div class="trainLeft">
-                            <label for="batchSizeSelect">Batch Size</label>
-                            <select id="batchSizeSelect" name="batchSizeSelect">
-                                <option value="1">1</option>
-                                <option value="16">16</option>
-                                <option value="32" selected>32</option>
-                                <option value="48">48</option>
-                                <option value="64">64</option>
-                                <option value="80">80</option>
-                            </select>
-                        </div>
-                        <div class="trainLeft">
-                            <label for="learningRateSelect">Learning Rate</label>
-                            <select id="learningRateSelect" name="learningRateSelect">
-                                <option value="0.1">0.1</option>
-                                <option value="0.01" selected>0.01</option>
-                                <option value="0.001">0.001</option>
-                                <option value="0.0001">0.0001</option>
-                            </select>
-                        </div>
-                    </fieldset>
-                    <fieldset >
-                        <legend>Callback Options</legend>
-                        <div class="checkboxDiv">
-                            <input type="checkbox" id="earlyExitCheck" name="earlyExitCheck" value="earlyExitCallback">
-                            <label for="earlyExitCheck" class="checkboxLabel">Use Early Exit Training Callback</label><br>
-                        </div>
-                        <div class="checkboxDiv">
-                            <input type="checkbox" id="learnRateCheck" name=""learnRateCheck value="learnRateCallback">
-                            <label for="learnRateCheck" class="checkboxLabel">Use Dynamic Learning Rate Callback</label>
-                        </div>
-                    </fieldset>
-                    <div id="trainGraphDiv"></div>
-                </div>
-            </form>
+                        </fieldset>
+                        <iframe id="graphIFrame" class="graphIFrame">Generating Graph...</iframe>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div id="tab3" class="tabcontent" style="display: none">
-            <h3>Model Testing</h3>
-            <form id="testForm" method="post">
-                <div class="testContainer">
-                    <fieldset>
-                        <legend>Testing Action</legend>
-                        <div class="trainMsg" id="testMsgId"></div>
-                        <div id="testBtnContainer" >
-                            <input type="button" id="testingBtn" value="Test Model">
-                        </div>
-                    </fieldset>
-                    <!--<fieldset>
-                        <legend>Select Testing Parameters</legend>
-                        <div class="trainLeft">
-                            <label for="startTimeOffsetSelect">Start Time Offset (hrs)</label>
-                            <select id="startTimeOffsetSelect">
-                                <option value="50">50</option>
-                                <option value="60">60</option>
-                                <option value="70" selected>70</option>
-                                <option value="80">80</option>
-                            </select>
-                        </div>
-                        <div class="trainLeft">
-                            <label for="endTimeOffsetSelect">End Time Offset (min)</label>
-                            <select id="endTimeOffsetSelect">
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5" selected>5</option>
-                                <option value="6">6</option>
-                                <option value="8">8</option>
-                            </select>
-                        </div>
-                    </fieldset>-->
-                    <iframe id="testGraphIFrame" class="testGraphIFrame">Generating Graph...</iframe>
-                </div>
-            </form>
-
+            <h3>Generate Synthetic Data</h3>
+            <div class="GenerateDataContainer">
+                <form id="GenerateDataForm" method="post">
+                    
+                    <div class="displayContainer">
+                        <fieldset>
+                            <legend>Data Output</legend>
+                            <div class="dataMsg" id="dataMsgId"></div>
+                            <div id="graphBtnContainer" >
+                                <input type="button" id="graphBtn" value="Graph Model">
+                            </div>
+                        </fieldset>
+                        <iframe id="graphIFrame" class="graphIFrame">Generating Graph...</iframe>
+                    </div>
+                </form>
+            </div>
 
         </div>
 
     </div>
     <script src="static/tabs.js" charset="utf-8"></script>
-    <script src="static/progress_data.js"></script>
-    <script src="static/train_page.js"></script>
-    <script src="static/test_page.js"></script>
-
+    <script src="static/display.js"></script>
 
 </body>
 </html>
