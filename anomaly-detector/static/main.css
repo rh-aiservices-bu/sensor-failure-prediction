@@ -184,3 +184,8 @@ fieldset{
     position: relative;
     border: none;
 }
+iframe#graphIFrame {
+    width: 760px;
+    height: 300px;
+    margin: auto;
+}
