@@ -1,4 +1,9 @@
 from flask import Flask, render_template, Response, request
+from dash import dash, html, dcc
+from dash.dependencies import Input, Output
+
+
+
 import json
 from graph_manager import GraphManager as GM
 from static.data.data_prep import load_sensor
