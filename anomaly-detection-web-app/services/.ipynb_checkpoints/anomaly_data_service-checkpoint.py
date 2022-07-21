@@ -88,7 +88,7 @@ class AnomalyDataService:
 query = AnomalyDataService
 df_all_rows = query.get_all_data()
 print(" \nAll Sensors:")
-print(df_all_rows.head())
+print(df_all_rows.iloc[:,0:2])
 
 # Selecting sensor 25 from the anomaly table and reading it into a pd df
 print(" \n Sensor 25:")
