@@ -3,7 +3,7 @@ function displayGraph(){
     let formObj = document.getElementById("displayForm")
     
     postTestRequest(url, formObj)
-        .then(graphHTML => displayTestGraphHTML(graphHTML))
+        .then(graphHTML => displayGraphHTML(graphHTML))
         .catch(error => console.error(error))
 }
 async function postTestRequest(url, formObj) {
@@ -14,13 +14,13 @@ async function postTestRequest(url, formObj) {
         .then((response) => response.text());
 }
 
-function displayTestGraphHTML(graphHTML){
-    testGraphIFrameObj.style.display = 'block';
-   let iFrameDoc = testGraphIFrameObj.document;
-   if(testGraphIFrameObj.contentDocument){
-		iFrameDoc = testGraphIFrameObj.contentDocument;
-	}else if(testGraphIFrameObj.contentWindow){
-		iFrameDoc = testGraphIFrameObj.contentWindow.document;
+function displayGraphHTML(graphHTML){
+    graphIFrameObj.style.display = 'block';
+   let iFrameDoc = graphIFrameObj.document;
+   if(graphIFrameObj.contentDocument){
+		iFrameDoc = graphIFrameObj.contentDocument;
+	}else if(graphIFrameObj.contentWindow){
+		iFrameDoc = graphIFrameObj.contentWindow.document;
 	}
 	if(iFrameDoc){
 		iFrameDoc.open();
@@ -30,6 +30,6 @@ function displayTestGraphHTML(graphHTML){
 }
 
 
-const testGraphIFrameObj = document.getElementById("graphIFrame");
-const testGraphBtnObj = document.getElementById("graphBtn");
+const graphIFrameObj = document.getElementById("graphIFrame");
+const graphBtnObj = document.getElementById("graphBtn");
 graphBtnObj.addEventListener("click", displayGraph);
