@@ -1,8 +1,8 @@
 from flask import Flask, render_template, Response, request
-from dash import dash, html, dcc
-from dash.dependencies import Input, Output
 
-
+# TODO: use dash instead of flask
+#from dash import dash, html, dcc
+#from dash.dependencies import Input, Output
 
 import json
 from graph_manager import GraphManager as GM
@@ -29,3 +29,7 @@ def generate_graph():
 
 if __name__ == "__main__":
     app.run(debug=True, port=8080, host="0.0.0.0")  # nosec
+
+# run gunicorn manually
+# TODO: move to readme
+# gunicorn wsgi:application -b 0.0.0.0:8080
