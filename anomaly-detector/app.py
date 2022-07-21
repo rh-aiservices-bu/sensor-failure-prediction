@@ -6,6 +6,11 @@ import pandas as pd
 
 
 app = Flask(__name__)
+
+# 'application' reference required for wgsi / gunicorn
+# https://docs.openshift.com/container-platform/3.11/using_images/s2i_images/python.html#using-images-python-configuration
+application = app
+
 @app.route('/')
 def main():
     return render_template('main.html', col_list=['sensor_25', 'sensor_11', 'sensor_36', 'sensor_34'])
@@ -17,5 +22,5 @@ def generate_graph():
     buffer = GM.plot_data(df, anomalies)
     return buffer
 
-if __name__ == '__main__':
-    app.run(port=8080, debug=True,host='0.0.0.0')
+if __name__ == "__main__":
+    app.run(debug=True, port=8080, host="0.0.0.0")  # nosec
