@@ -25,13 +25,12 @@ class GraphManager:
         ncols = len(cols)
 
         # subplot setup
-
         traces = []
-        for col in cols:
-            traces.append(go.Scatter(x=df_data[col].index,
-                                     y=df_data[col].values,
-                                     mode='lines',
-                                     line_color='#dde3ed'))
+    
+        traces.append(go.Scatter(x=df_data[cols[1]].index,
+                                 y=df_data[cols[1]].values,
+                                 mode='lines',
+                                 line_color='#dde3ed'))
 
         for time in anomaly_times:
             traces.append(go.Scatter(x=[time, time],
@@ -41,7 +40,7 @@ class GraphManager:
                                      marker_line_width=5
                                      ))
         layout = Layout(width=750,
-                        height=250,
+                        height=500,
                         showlegend=False,
                         title={'text': 'Anomaly Detection',
                                'y': 0.99,

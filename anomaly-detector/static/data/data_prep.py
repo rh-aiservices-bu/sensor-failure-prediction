@@ -3,7 +3,6 @@ from io import BytesIO
 import base64
 import pandas as pd
 import matplotlib.dates as mdates
-import datetime as dt
 import numpy as np
 
 
