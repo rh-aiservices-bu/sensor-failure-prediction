@@ -17,5 +17,3 @@ def generate_graph():
     buffer = GM.plot_data(df, anomalies)
     return buffer
 
-if __name__ == '__main__':
-    app.run(port=5004, debug=True)
