@@ -12,23 +12,10 @@ def main():
 
 @app.route('/generate-graph', methods=['GET', 'POST'])
 def generate_graph():
-    print("\n")
-    print("\n")
-    print('data')
-    print("\n")
-    print(request.data)
-    print("\n")
-    print("\n")
-    print('form')
-    print("\n")
-    print(request.form)
-    print("\n")
-    print("\n")
-    print("\n")
     chosen_sensor = request.form or '{}'
     df, anomalies = load_sensor(json.loads(chosen_sensor).get('sensor'))
     buffer = GM.plot_data(df, anomalies)
     return buffer
 
 if __name__ == '__main__':
-    app.run(port=8080, debug=True)
+    app.run(port=5004, debug=True)
