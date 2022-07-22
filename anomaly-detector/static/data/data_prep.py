@@ -53,11 +53,11 @@ def find_anomalies(df):
 def load_sensor(sensor='sensor_25'):
     query = AnomalyDataService
     df_data = query.get_all_data()
-    df_sensor = df_data[['sensortimestamp', 'sensor_25']]
+    df_sensor = df_data[['sensortimestamp', sensor]]
     return df_sensor, find_anomalies(df_sensor)
 
 def load_sensor(sensor='sensor_25'):
     query = AnomalyDataService
     df_data = query.get_all_data()
-    df_sensor = df_data[['sensortimestamp', 'sensor_25']]
+    df_sensor = df_data[['sensortimestamp', sensor]]
     return df_sensor, find_anomalies(df_sensor)
