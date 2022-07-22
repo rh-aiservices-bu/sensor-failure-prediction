@@ -23,7 +23,9 @@ def main():
 @app.route('/generate-graph', methods=['GET', 'POST'])
 def generate_graph():
     chosen_sensor = request.form or '{}'
-    df, anomalies = load_sensor(json.loads(chosen_sensor).get('sensor'))
+    print(chosen_sensor)
+    #json.loads(chosen_sensor).get('sensor')
+    df, anomalies = load_sensor('sensor_25')
     buffer = GM.plot_data(df, anomalies)
     return buffer
 
