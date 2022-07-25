@@ -1,7 +1,7 @@
 import pandas as pd
 import psycopg2
 
-from connection_pool_singleton import ConnectionPoolSingleton
+from services.connection_pool_singleton import ConnectionPoolSingleton
 class AnomalyDataService:
     """Executes and returns queries from a Postgres database"""
 
@@ -81,28 +81,3 @@ class AnomalyDataService:
         finally:
             cursor.close()
             pool.putconn(conn)
-
-# Usage examples
-
-# Selecting all rows from the anomaly table and reading it into a pandas dataframe
-query = AnomalyDataService
-df_all_rows = query.get_all_data()
-print(" \nAll Sensors:")
-print(df_all_rows.head())
-
-# Selecting sensor 25 from the anomaly table and reading it into a pd df
-print(" \n Sensor 25:")
-sensor_25 = query.get_sensor_25()
-print(sensor_25.head())
-
-# Selecting the minimum and maximum value after grouping by col_name = sensor_25 and groupname = 3
-query.get_min_max(col_name='sensor_25', groupname='3')
-
-# Selecting sensor 11 from the anomaly table and reading it into a pd df
-print(" \n Sensor 11:")
-sensor_11 = query.get_sensor_11()
-print(sensor_11.head())
-
-
-# Selecting the minimum and maximum value after grouping by col_name = sensor_11 and groupname = any
-query.get_min_max(col_name='sensor_11', groupname='groupname')
