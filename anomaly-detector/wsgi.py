@@ -6,7 +6,7 @@ from flask import Flask, render_template, Response, request
 
 import json
 from graph_manager import GraphManager as GM
-from static.data.data_prep import load_sensor
+from data.data_prep import load_sensor
 import pandas as pd
 
 
@@ -22,10 +22,10 @@ def main():
 
 @app.route('/generate-graph', methods=['GET', 'POST'])
 def generate_graph():
-    chosen_sensor = request.form or '{}'
+    chosen_sensor = request.form.get('sensor_list') or '{}'
     print(chosen_sensor)
     #json.loads(chosen_sensor).get('sensor')
-    df, anomalies = load_sensor('sensor_25')
+    df, anomalies = load_sensor(chosen_sensor)
     buffer = GM.plot_data(df, anomalies)
     return buffer
 
