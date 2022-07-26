@@ -20,6 +20,6 @@ class SynthesizeDataManager:
             dict_reader = DictReader(read_obj)
             for row in dict_reader:
                 # print("row in reader: {}".format(row))
-                time.sleep(1 / 10)
+                time.sleep(1 / 5)
                 yield [row['timestamp'], row[col_name]]
 
