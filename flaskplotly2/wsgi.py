@@ -3,6 +3,9 @@ from managers.preprocess_data_manager import PreprocessDataManager
 
 app = Flask(__name__)
 
+# 'application' reference required for wgsi / gunicorn
+# https://docs.openshift.com/container-platform/3.11/using_images/s2i_images/python.html#using-images-python-configuration
+application = app
 
 @app.route('/')
 def main():
@@ -29,4 +32,8 @@ def generate_data():
 
 
 if __name__ == '__main__':
-    app.run(port=5004, debug=True)
+    app.run(debug=True, port=8080, host="0.0.0.0")  # nosec
+
+# run gunicorn manually
+# TODO: move to readme
+# gunicorn wsgi:application -b 0.0.0.0:8080
