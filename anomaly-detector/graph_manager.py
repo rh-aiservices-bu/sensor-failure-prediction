@@ -34,7 +34,7 @@ class GraphManager:
 
         for time in anomaly_times:
             traces.append(go.Scatter(x=[time, time],
-                                     y=[0, 0.5],
+                                     y=[df_data.loc[time,cols[1]],df_data.loc[time+1,cols[1]]],
                                      mode='lines',
                                      line_color='#e04031',
                                      marker_line_width=5
