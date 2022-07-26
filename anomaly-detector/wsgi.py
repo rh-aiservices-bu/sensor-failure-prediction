@@ -22,7 +22,7 @@ def main():
 
 @app.route('/generate-graph', methods=['GET', 'POST'])
 def generate_graph():
-    chosen_sensor = request.form.get('sensor_list') or 'sensor_25'
+    chosen_sensor = 'sensor_25'
     print(chosen_sensor)
     #json.loads(chosen_sensor).get('sensor')
     df, anomalies = load_sensor(chosen_sensor)
