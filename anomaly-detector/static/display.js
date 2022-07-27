@@ -1,15 +1,15 @@
 function displayGraph(){
     let url = '/generate-graph';
     let formObj = document.getElementById("displayForm")
-    
-    postTestRequest(url, formObj)
+    let formData = new FormData(formObj);
+    postTestRequest(url, formData)
         .then(graphHTML => displayGraphHTML(graphHTML))
         .catch(error => console.error(error))
 }
-async function postTestRequest(url, formObj) {
+async function postTestRequest(url, formData) {
     return fetch(url, {
         method: 'POST',
-        body: formObj
+        body: formData
     })
         .then((response) => response.text());
 }
