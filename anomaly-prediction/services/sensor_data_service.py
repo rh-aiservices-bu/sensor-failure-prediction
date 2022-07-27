@@ -2,7 +2,7 @@ import numpy as np
 
 import pandas as pd
 class SensorDataServiceCSV:
-    base_path = 'static/sensor_data_npy'
+    base_path = 'static'
     csv_name = 'sensor.csv'
     X_train_name = 'X_train.npy'
     Y_train_name = 'Y_train.npy'
