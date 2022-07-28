@@ -112,7 +112,7 @@ class PreprocessDataManager:
                                                  x_old_p, x_new_p, y_percent_diff_old, y_percent_diff,
                                                  plot_color, self.row_counter)
                     # print("Regress slope: {}   Regress intspt: {}".format(fit[0],fit[1]))
-                    print("Server json data: {} ".format(json_data) )
+                    # print("Server json data: {} ".format(json_data) )
                     y_percent_diff_old = y_percent_diff_new
                     plot_color = 'green'
                     self.row_counter = self.row_counter + self.points_group_size
