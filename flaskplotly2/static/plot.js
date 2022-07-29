@@ -85,7 +85,7 @@ function initPlot(){
 var msgCounter = 0; // Another way of shifting. Not used in this code.
 
 function updatePlot(jsonData){
-    console.log("plot.js updatePlot()  " + jsonData);
+    //console.log("plot.js updatePlot()  " + jsonData);
     //console.log("msgCounter: " + msgCounter++);
     let max = 100;
     let jsonObj = JSON.parse(jsonData);  // json obj is in form:  ['timestamp', 'sensorVal']
