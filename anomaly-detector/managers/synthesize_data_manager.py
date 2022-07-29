@@ -1,7 +1,6 @@
 from csv import DictReader
 import time
 
-from gpg import Data
 from services.anomaly_data_service import AnomalyDataService
 from services.synthesize_data import Data_Synthesizer
 
