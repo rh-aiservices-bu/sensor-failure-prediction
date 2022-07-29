@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 import random
+import matplotlib.pyplot as plt
+import matplotlib.dates as md
+from sklearn.preprocessing import MinMaxScaler
 from pickle import dump, load
 import datetime
 import time
@@ -15,9 +18,9 @@ class Data_Synthesizer:
     @staticmethod 
     def synthesize_data(sensor_name=''):
         config = DGANConfig(
-            max_sequence_len=100,
+            max_sequence_len=720, # hard coded from prev shape
             sample_len=20, # trying a larger sample_len
-            batch_size=min(1000, 51),
+            batch_size=min(1000, 300),
             apply_feature_scaling=True, 
             apply_example_scaling=False,
             use_attribute_discriminator=False,
@@ -25,10 +28,11 @@ class Data_Synthesizer:
             discriminator_learning_rate=1e-4,
             epochs=10000)
 
+
         model = DGAN(config)
 
         # loading model for future use 
-        model = model.load("static/dgan_casing.pt")
+        model = model.load("static/dgan_model_2.pt", map_location=torch.device('cpu'))
         # Generate synthetic data - this ran near instantly
         _, synthetic_features = model.generate_numpy(1000)
 
@@ -46,6 +50,11 @@ class Data_Synthesizer:
             sensor_name = 'sensor_' + str(random.randint(111,999))
         
         reshaped_df = pd.DataFrame(reshaped_data, columns=["timestamp", sensor_name])
+
+        #dGAN2 generates 4 sensors
+        sensor_cols = ['sensor_25', 'sensor_11', 'sensor_36', 'sensor_34']
+        synthetic_df = pd.DataFrame(synthetic_features.reshape(-1, synthetic_features.shape[2]), columns=sensor_cols)
+
 
         date_from = datetime.datetime.strptime('2017-04-08', '%Y-%m-%d')
         dates = []
