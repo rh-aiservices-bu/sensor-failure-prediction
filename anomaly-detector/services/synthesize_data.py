@@ -1,9 +1,6 @@
 import pandas as pd
 import numpy as np
 import random
-import matplotlib.pyplot as plt
-import matplotlib.dates as md
-from sklearn.preprocessing import MinMaxScaler
 from pickle import dump, load
 import datetime
 import time
