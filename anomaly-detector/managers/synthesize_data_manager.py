@@ -29,13 +29,14 @@ class SynthesizeDataManager:
     def load_sensor(col_name):
         query = AnomalyDataService
         df_data = query.get_all_data()
+        df_data['timestamp'] = df_data['sensortimestamp'].to_string()
+        df_sensor = df_data[['timestamp', col_name]]
         
-        df_sensor = df_data[['sensortimestamp', col_name]]
         for index in df_sensor.index:
                 # print("row in reader: {}".format(row))
                 row = df_sensor.loc[index,:]
                 time.sleep(1 / 10)
-                yield [row['sensortimestamp'], row[col_name]]
+                yield [row['timestamp'], row[col_name]]
 
     @staticmethod
     def synthesize_data(col_name):

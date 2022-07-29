@@ -73,31 +73,6 @@
 label {
     display: block;
 }
-table{
-    display: block;
-}
-.prepContainer{
-  margin: 20px auto;
-  width:400px;
-  height:600px;
-  background-color:#f1f1f1;
-  display:grid;
-  grid-template-columns: 200px 200px;
-  grid-row: auto;
-  grid-column-gap: 20px;
-  grid-row-gap: 10px;
-}
-  .box{
-    background-color:blue;
-    padding:20px;
-    border-radius:10px;
-    color:#111;
-   /* display:flex;*/
-    align-items:center;
-    justify-content:center;
-    font-size:40px;
-    font-family:sans-serif;
-  }
 
 .mainDiv {
     text-align: center;
@@ -108,112 +83,7 @@ table{
     border-bottom-left-radius: 25px;
     border-top-right-radius: 25px;
 }
-}
 
-.msgDivFileUpload {
-    color: blue;
-}
-
-.dateDiv {
-    padding-bottom: 15px;
-    padding-top: 15px;
-    display: inline-block;
-    border: 3px solid #000000;
-    margin-bottom: 15px;
-}
-
-.dataTable {
-    border: 3px solid #000000;
-    display: inline-block;
-
-}
-
-
-.dataTabletr {
-    padding: 10px;
-}
-
-.dataDiv {
-    text-align: center;
-}
-.trainContainer{
-    border: 2px solid black;
-    margin: 20px auto;
-    width:600px;
-    height:700px;
-    background-color:#f1f1f1;
-    /*display:grid;
-    grid-template-columns: 200px 200px;
-    grid-row: auto;
-    grid-column-gap: 20px;
-    grid-row-gap: 10px;*/
-}
-.testContainer{
-    border: 2px solid black;
-    margin: 20px auto;
-    width:800px;
-    height:700px;
-    background-color:#f1f1f1;
-}
-
-.scrollTable {
-    border: 2px solid black;
-    height: 200px;
-   /* width: 200px;*/
-    overflow-y: auto;
-}
-/* Sticky headings for table*/
-.nullsTable thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: #bed5ec
-}
-
-progress[value]{
-    width: 300px;
-    height: 40px;
-}
-.spanTwoCols{
-    grid-column: span 2;
-}
-.progressText{
-    grid-column: span 2;
-    margin-top: 5px;
-}
-.trainMsg{
-    text-align: center;
-    grid-column: span 2;
-    height: 40px;
-}
-.trainLeft{
-    float:left;
-    width: 30%
-}
-.checkboxDiv{
-    text-align: left;
-    display: block;
-    margin: 10px;
-}
-input[type=checkbox]{
-    display: inline;
-}
-.checkboxLabel{
-    display: inline;
-}
-fieldset{
-    margin: 20px;
-}
-.trainBtnContainer{
-    margin: 20px;
-}
-.imgSize{
-    width: 100%;
-    height: 100%;
-}
-.dataPrepActionFieldset{
-
-}
 .testGraphIFrame{
     width: 100%;
     height: 300px;
