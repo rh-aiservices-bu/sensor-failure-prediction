@@ -16,7 +16,7 @@ def main():
 def generate_data():
     #  col_name, points_group_size, regress_group_size, anomaly_std_factor are all obtained
     # from the form in the user interface.
-    regression_group_size = 80
+    regression_group_size = 40
     points_group_size = 1
     #col_name = 'sensor_34'
     col_name = 'pressure'
