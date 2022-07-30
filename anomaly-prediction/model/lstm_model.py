@@ -49,14 +49,13 @@ class LSTMModel():
                             verbose=verbose, shuffle=shuffle)
         return history
 
-    def save_model(self, model_path):
+    def save(self, model_path):
         self.model.save(model_path)
 
     @staticmethod
     def load_model(model_path):
-        #self.model.load_model(model_path)
         return keras.models.load_model(model_path)
 
     def predict(self, X):
-       y = self.model.predict(X)
-       return y
+        y = self.model.predict(X)
+        return y
