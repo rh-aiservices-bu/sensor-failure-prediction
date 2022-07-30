@@ -44,6 +44,7 @@ table{
     display: block;
 }
 .prepContainer{
+    display: none;
   margin: 20px auto;
   width:400px;
   height:600px;
@@ -53,6 +54,7 @@ table{
   grid-row: auto;
   grid-column-gap: 20px;
   grid-row-gap: 10px;
+
 }
   .box{
     background-color:blue;
@@ -99,6 +101,14 @@ table{
 .dataDiv {
     text-align: center;
 }
+.featureGrid{
+    display: grid;
+    grid-template-columns: 200px 200px;
+    grid-row: auto;
+    grid-column-gap: 20px;
+    grid-row-gap: 10px;
+}
+
 .trainContainer{
     border: 2px solid black;
     margin: 20px auto;
