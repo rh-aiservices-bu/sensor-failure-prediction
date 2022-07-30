@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import LearningRateScheduler
 from dataprep.data_preparation import DataPreparation
 from model.lstm_model import LSTMModel
+import joblib
 
 
 
@@ -27,8 +28,14 @@ class TrainManager:
         # TODO:  make callbacks configurable
         callback = LearningRateScheduler(TrainManager.scheduler)
         history = TrainManager.model.fit(X, y, epochs, batch_size, callbacks=[callback])
+        TrainManager.model.save('static/trained_model')
+
         return history
 
     @staticmethod
     def calculate_job_size(epochs, batch_size):
         return epochs * batch_size
+
+   # def save_model(self):
+        # joblib.dump(self.model, 'static/trained_model.gz')
+   #     tf.keras.models.save_model(self.model, 'static/trained_model.gz')
