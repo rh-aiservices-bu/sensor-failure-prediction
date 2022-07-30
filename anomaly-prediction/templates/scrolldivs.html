@@ -1,0 +1,71 @@
+<!--This HTML template portion is used to dynamically load data in the Data Prep tab.  The data is obtained asynchronously
+and the resulting html is loaded into a div with the id of "displayDataDiv"-->
+                <div class="scrollTable" >
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Col Name</th>
+                                <th>Sum Nulls</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% for indx, val in nulls_series.items() %}
+                                <tr>
+                                    <td>{{indx}}</td>
+                                    <td>{{val}}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="scrollTable">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Dropped Cols</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for col in bad_cols %}
+                            <tr>
+                                <td>{{col}}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="scrollTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sensor Name</th>
+                                <th>Ranked Variance</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in ranked_features %}
+                                <tr>
+                                    <td>{{row[0]}}</td>
+                                    <td>{{'%0.1f'| format(row[1]*100|float)}}%</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="scrollTable">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Features In Model</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for col in features_in_model %}
+                            <tr>
+                                <td>{{col}}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
