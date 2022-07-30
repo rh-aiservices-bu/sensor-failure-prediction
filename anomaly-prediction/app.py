@@ -57,9 +57,9 @@ def train_model():
     This is an asyncronous function that generates the training graph stats.
     :return: An <img> tag that contains the serialized version of the graph
     """
-    epochs = request.form.get("epochsSelect")
-    batch_size = request.form.get("batchSizeSelect")
-    learning_rate = request.form.get("learningRateSelect")
+    epochs = int(request.form.get("epochsSelect"))
+    batch_size = int(request.form.get("batchSizeSelect"))
+    learning_rate = float(request.form.get("learningRateSelect"))
 
     hidden_layer1_nodes = 128
     hidden_layer2_nodes = 128
