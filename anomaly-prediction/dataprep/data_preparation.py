@@ -27,8 +27,8 @@ class DataPreparation:
     y_val = None
     y_test = None
     train_time_window_dimensions = [96 * 60, 12 * 60, 12 * 60, 5]  # 96h, 12h, 12h, 5min
-    #test_time_window_dimensions = [60 * 60, 5]  # 60h 5 min
-    test_time_window_dimensions = [70 * 60, 5]  # 60h 5 min
+
+    test_time_window_dimensions = [70 * 60, 5]  # 70h 5 min
     stride = 5
     window_size = 20
     whole_dataframe = None
@@ -38,56 +38,90 @@ class DataPreparation:
     bad_cols = ['Unnamed: 0', 'sensor_00', 'sensor_15', 'sensor_50', 'sensor_51']
     job_size = 0
     progress_counter = 0
+
     def __init__(self):
         DataPreparation.do_automated_data_prep()
-        # TODO: move this call to a generator for use with progress bar
-        #DataPreparation.finish_data_prep()
 
 
     @staticmethod
     def get_df():
-        #df = pd.read_csv('static/sensor.csv', index_col='timestamp', parse_dates=True)
-        df = SensorDataServiceCSV.get_all_sensor_data()
+        """Get all sensor data as DataFrame
 
+        :return: Sensor as a dataframe
+        :type: Pandas DataFrame
+        """
+        df = SensorDataServiceCSV.get_all_sensor_data()
         return df
 
     # Drop columns in given list
     @staticmethod
     def drop_bad_cols(df, col_list):
+        """Drop unusable columns
+
+        :param df: DataFrame
+        :type: Pandas DataFrame
+        :param col_list: List of unusable column names
+        :return: none
+        """
         df.drop(col_list, axis=1, inplace=True)
 
     # How many nulls in each col.
     # return Series with Index (col names) and values (number of nulls for col)
     @staticmethod
     def get_null_list(df):
+        """Get list of sums of nulls.
+        Get list by columns showing how many nulls are in each column
+        :param df: DataFrame
+        :type: Pandas DataFrame
+        :return: List of sums of nulls
+        :type: List
+        """
         nulls_series = df.isnull().sum()
         DataPreparation.original_null_list = nulls_series
-       # sum_index = nulls_series.index
-       # sum_vals = nulls_series.values
         return nulls_series
 
     @staticmethod
     def replace_nan_with_mean(df):
-        # Replace NaN columnwise with mean of each column
+        """
+        Replace NaN columnwise with mean of each column
+        :param df: DataFrame
+        :type: Pandas DataFrame
+        :return: none
+        """
         df_cols = df.columns
         df.fillna(value=df[df_cols].mean(), inplace=True)
 
     @staticmethod
     def machine_status_to_numeric(df):
+        """Make 'machine_status" column numeric
+        Numeric values are 0: 'NORMAL';, 1: 'BROKEN', 0.5: 'RECOVERING'
+        :param df: DataFrame
+        :type: Pandas DataFrame
+        :return: none
+        """
         status_values = [(df['machine_status'] == 'NORMAL'), (df['machine_status'] == 'BROKEN'),
                          (df['machine_status'] == 'RECOVERING')]
         numeric_status_values = [0, 1, 0.5]
 
         df['machine_status'] = np.select(status_values, numeric_status_values, default=0)
 
-    # First change 'machine_status' with numeric values given by numeric_status_values
-    # Create a new column that will contain values that indicate time window to do prediction
-    # @param df the original dataframe
-    # @param start_offset_min  Starting offset from a failure time (in minutes)
-    # @param end_offset_min    Ending offset from a failure time (in minutes)
+
     @staticmethod
     def add_target_col(df, failure_times, start_offset, end_offset):
+        """Create a new column that will contain values that indicate time window to do prediction
+        :param df the original dataframe
+        :type: Pandas DataFrame
+        :param start_offset  Starting offset from a failure time (in minutes)
+        :type: int
+        :param end_offset    Ending offset from a failure time (in minutes)
+        :type: int
+        :param df: Dataframe
+        :type: Pandas DataFrame
+        :param failure_times: List of failure times ( where 'machine_status' has a value of 1
+        :type: List of string timestamps
 
+        :return: none
+        """
         df['alarm'] = df['machine_status']
         for i, failure_time in enumerate(failure_times):
             start_predic_time = failure_time - pd.Timedelta(
@@ -95,11 +129,15 @@ class DataPreparation:
             stop_predic_time = failure_time - pd.Timedelta(
                 seconds=60 * end_offset)  # mins before the failure time
             df.loc[start_predic_time:stop_predic_time, 'alarm'] = 2  # can not use 1, because 1 indicates the machine failure time
-        #return df
-
 
     @staticmethod
     def get_failure_times(df):
+        """Get DataFrame of rows where 'machine_status' has a value of 1
+
+        :param df: DataFrame
+        :return: Failure times
+        :type: DatetimeIndex
+        """
         return df[df['machine_status'] == 1].index
 
     '''
@@ -110,6 +148,15 @@ class DataPreparation:
 
     @staticmethod
     def separate_data(df, failure_times):
+        """Slice data by failure times
+        If there are 7 failure times, then produce 7 slices as DataFrames
+
+        :param df: All Data
+        :type: Pandas DataFrame
+        :param failure_times: DatetimeIndex
+        :return: DataFrames for training, validation and testing
+        :type: tuple of DataFrames
+        """
         df_val = df.loc[:(failure_times[0] + pd.Timedelta(seconds=60 * 120)), :]
         df_test = df.loc[(failure_times[0] + pd.Timedelta(seconds=60 * 120)):(
                 failure_times[1] + pd.Timedelta(seconds=60 * 120)), :]
@@ -117,55 +164,68 @@ class DataPreparation:
 
         return df_train, df_val, df_test
 
-    #  Create a new column that will contain values that indicate time window to do prediction
-    # @param df the original dataframe
-    # @param start_offset_min  Starting offset from a failure time (in minutes)
-    # @param end_offset_min    Ending offset from a failure time (in minutes)
-
-
-
-    # Scale fit the training data.  Scale only on columns with sensor_names
-    # @param training_data df of training data
-    # @param sensor_names original sensor names
-    # @return min_max_scaler that has been fit to training data
     @staticmethod
     def get_scaler(training_data, sensor_names):
+        """Get a scaler for training data
+        Apply MinManScaler to the training data using the range (0, 1)
+        :param training_data:
+        :type: Pandas DataFrame
+        :param sensor_names: List of sensor names(feature names)
+        :type: list
+        :return: scaler for the training data
+        :type: MinMaxScaler
+        """
         min_max_scaler = MinMaxScaler(feature_range=(0, 1))
         scaler = min_max_scaler.fit(training_data[sensor_names])
 
         return scaler
 
-    # Scale transform given dataframe with given fit scaler.
-    # Only feature columns are scaled
-    # @param scaler min_max_scaler that has been fit to training data
-    # @param data_df  dataframe to be scaled
-    # @param sensor_names list of sensor names
-    # @returns ndarray of scaled data
+
     @staticmethod
     def scale_dataframe(scaler, data_df, sensor_names):
+        """Transform given dataframe using given scaler as applied to the given columns
+
+        :param scaler: The scaler that has been fit to the dataframe
+        :type: MinMaxScaler
+        :param data_df: Dataframe to be scaled
+        :type: Pandas DataFrame
+        :param sensor_names: List of sensor names
+        :type: List of string
+        :return: array of scaled data
+        :type: ndarray
+        """
         scaled_data = scaler.transform(data_df[sensor_names])
         return scaled_data
 
-    # @param train_scaled_data training data (ndarray) that has been scaled
-    # @param num_components number of features to include in the PCA stats
     @staticmethod
     def get_PCA(train_scaled_data, num_components):
+        """Get PCA that has been fit to the scaled training data
+        PCA is the Principal Component Analysis.  Training data features are each ranked by their maximum variance from
+        all the other features.
+        :param train_scaled_data: scaled training data
+        :type: ndarray
+        :param num_components: Number of features in the training data
+        :return: Fit PCA
+        :type: PCA
+        """
         pca = PCA(n_components=num_components).fit(train_scaled_data)
         return pca
 
-    # Generate a dataframe that shows Ranked Features and Variance Ratio.  From this the user
-    # can determine which top features to include in the training, validation, and testing
-    # @param fit_pca the PCA that has been fitted with training data
-    # @param feature_names is a list of feature names in the original df
-    # This method finds the top num_components principal components and maps them to the
-    # original sensor names. Note that the pca.transform() only returns feature names of p0, p1, p2, etc.,
-    # and not the sensor names.
-    # @ return df showing feature rankings from best to worst, and the pca transformation.
-    # NOTE: the pca transformation is used to transform a df so that columns are re-arranged
-    # in the order that the pca has determined.  So the df columns start with the most important feature
-    # as the first column, second most important feature as the second column, etc.
+
     @staticmethod
     def get_ranked_features(fit_pca, feature_names):
+        """Get a DataFrame of features ranked by their Variance Ratio.
+        This method finds the PCA rankings of the given features.  The param, feature_names are used to map
+        the PCA rankings to the actual feature names, since the PCA.transform() method only returns PCA feature names of
+        p0, p1, p2, etc. and not the actual sensor names.  The resulting DataFrame will have two columns: 'Ranked Features',
+        and 'Variance Ratio'.  The feature with the highest Variance Ratio is on top.  This ranking allows the user
+        to determine which features exhibit the largest Variance Ratios.
+        :param fit_pca: The PCA that has been fit on the scaled training data
+        :type: PCA
+        :param feature_names: List of feature name
+        :return: DataFrame of ranked features
+        :type: Pandas DataFrame
+        """
         num_components = fit_pca.components_.shape[0]
         most_important_indexes = [np.abs(fit_pca.components_[i]).argmax() for i in range(num_components)]
         most_important_names = [feature_names[most_important_indexes[i]] for i in range(num_components)]
@@ -175,9 +235,23 @@ class DataPreparation:
         df_ranked_features = pd.DataFrame(name_dict.items())
         df_ranked_features.columns = ['Ranked Features', 'Variance Ratio']
         return df_ranked_features
-
-
+    @staticmethod
     def transform_df_by_pca(pca, df_data, scaled_data, num_features_to_include, sensor_names):
+        """Reduce the number of features in the training data by the parameter num_features_to_include.
+
+        :param pca: The PCA for the training data
+        :type: PCA
+        :param df_data: Training data dataframe
+        :type: Pandas DataFrame
+        :param scaled_data: Array of scaled data
+        :type: ndarray
+        :param num_features_to_include: Number of features to include in training
+        :type: int
+        :param sensor_names: List of sensor names that will be included
+        :type: List of string
+        :return: Training data that has been scaled and whose dimensions have been reduced
+        :type: Pandas DataFrame
+        """
 
         data_transformed = pca.transform(scaled_data)  # ndarray
         df_transformed = pd.DataFrame(data_transformed)
@@ -322,7 +396,7 @@ class DataPreparation:
         df = DataPreparation.get_df()
         # Get a series that shows how many nulls in each column.
         count_nulls_per_column = DataPreparation.get_null_list(df)
-        print(count_nulls_per_column)
+        # print(count_nulls_per_column)
         # After human intervention, determine which cols to drop based on the nulls per column above.
         # Eventually the GUI will present the nuls count per column and the user will select cols to drop
         bad_cols = ['Unnamed: 0', 'sensor_00', 'sensor_15', 'sensor_50', 'sensor_51']
