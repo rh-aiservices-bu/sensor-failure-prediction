@@ -1,4 +1,4 @@
-console.log("in progress_data.js");
+
 let startBtnObj = document.getElementById("startBtn");
 let stopBtnObj = document.getElementById("stopBtn");
 startBtnObj.addEventListener("click", startProcess);
