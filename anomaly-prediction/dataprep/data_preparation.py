@@ -6,6 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from utils.data_type_enum import DataTypeEnum
+import joblib
 
 
 from services.sensor_data_service import SensorDataServiceCSV
@@ -422,6 +423,9 @@ class DataPreparation:
         sensor_names = df_train.columns.tolist()[:-2]  # Get sensor names, omitting last two columns ('machine_status', 'Operation')
         #  Get scaler that has been fit to training data
         min_max_scaler = DataPreparation.get_scaler(df_train, sensor_names)
+
+        # Save scaler for use in prediction
+        joblib.dump(min_max_scaler, 'static/training_scaler.gz')
 
         # Scale (transform) using the previously formed min_max_scaler.  Results are ndarray
         DataPreparation.scaled_train = DataPreparation.scale_dataframe(min_max_scaler, df_train, sensor_names)
