@@ -314,7 +314,7 @@ class DataPreparation:
         # For each failure_time, generate two arrays of data. First array starts well (timewindow_for_use[0]) before failure time
         # and ends short(timewindow_for_use[1]) before the failure.
         # Second time array starts where first array ends(timewindow_for_use[2] and ends close to the failure (timewindow_for_use[3])
-        for i, failure_time in enumerate(failure_times):
+        for dummy, failure_time in enumerate(failure_times):
             windows_start = failure_time - pd.Timedelta(
                 seconds=60 * timewindow_dimensions[0])  # mins before the failure time
             windows_end = failure_time - pd.Timedelta(
@@ -389,6 +389,67 @@ class DataPreparation:
         else:
             DataPreparation.X_val = X_data
             DataPreparation.y_val = y_data
+
+
+    @staticmethod
+    def make_predict_data( df, failure_times, feature_names,
+                                  timewindow_dimensions, window_len, stride, data_type):
+
+        # [96*60, 12*60, 12*60, 5]
+        '''
+        Generate data samples using the time windows ahead of each machine failure time;
+        window_len: how many data points from each feature will be used to make one sample for the model.
+        stride: sliding window size
+        Transform original df from a 2D array [samples, features] to a 3D array [samples, timesteps, features*window_len]
+        '''
+
+        stride = 1
+        X = np.empty((1, 1, window_len * len(feature_names)),
+                     float)  # [samples, timesteps, features].  Samples will be appended below
+        Y = np.empty((1), float)
+
+        # For each failure_time, generate two arrays of data. First array starts well (timewindow_for_use[0]) before failure time
+        # and ends short(timewindow_for_use[1]) before the failure.
+        # Second time array starts where first array ends(timewindow_for_use[2] and ends close to the failure (timewindow_for_use[3])
+        for i, failure_time in enumerate(failure_times):
+            windows_start = failure_time - pd.Timedelta(
+                seconds=60 * timewindow_dimensions[0])  # mins before the failure time
+            windows_end = failure_time - pd.Timedelta(
+                seconds=60 * timewindow_dimensions[1])  # mins before the failure time
+            time_delt_min = windows_end - windows_start
+            # Feature data
+            df_prefailure_single_window_feature = df.loc[windows_start:windows_end, feature_names]
+            # Label data
+            df_prefailure_single_window_target = df.loc[windows_start:windows_end, 'alarm']
+
+            # Convert feature df and label df to lists
+            data_aslist = df_prefailure_single_window_feature.to_numpy().tolist()
+            targets_aslist = df_prefailure_single_window_target.tolist()
+
+            data_gen1 = TimeseriesGenerator(data_aslist, targets_aslist, window_len,
+                                           stride=stride,
+                                           sampling_rate=1, batch_size=1, shuffle=(data_type == DataTypeEnum.TRAIN))
+            len_gen1 = len(data_gen1)
+
+            print("len_gen1: {}   Train boolean: {}".format(len_gen1, data_type))
+
+            for i in range(len(data_gen1)):
+                x, y = data_gen1[i]
+                x = np.transpose(x).flatten()
+                x = x.reshape((1, 1, len(x)))
+                X = np.append(X, x, axis=0)
+                Y = np.append(Y, y / 2,
+                              axis=0)  # alarm windows are marked as 2, however, for the model,  use 1 becasue of the sigmoid function.
+                DataPreparation.progress_counter += 1
+                yield "event: inprogress\ndata: " + str(DataPreparation.progress_counter) + "\n\n"
+
+        # remove samples where y is neither 0 nor 1
+        id_keep = [i for i, x in enumerate(Y) if (x == 1) or (x == 0)]
+        y_data = Y[id_keep]
+        X_data = X[id_keep][:, :]
+
+
+
 
 
     # Prepare all data to be used for train and testing.  Store the results in Class Variables for easy retrieval
