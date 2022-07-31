@@ -12,3 +12,6 @@
 /static/sensor_data_npy/
 /static/energydata_complete.csv
 /static/sensor.csv
+/static/training_scaler.gz
+/static/trained_model/
+/static/slice1.csv
