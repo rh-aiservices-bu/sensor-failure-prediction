@@ -18,6 +18,7 @@
             <button id="dataPrepBtn" class="tablinks" >Data Prep</button>
             <button id="trainBtn" class="tablinks" >Train Model</button>
             <button id="testBtn" class="tablinks" >Test Model</button>
+            <button id="predictBtn" class="tablinks">Predict</button>
 
         </div>
 
@@ -152,6 +153,22 @@
             </form>
 
 
+        </div>
+
+        <div id="tab4" class="tabcontent">
+            <h3>Model Prediction</h3>
+            <div id="tab4PrepContainer" class="prepContainer">
+                <fieldset class="spanTwoCols">
+                    <legend> Data Preparation Action</legend>
+                    <div id="prepBtnContainer" class="spanTwoCols">
+                        <button id="startBtn">Start Prediction Graph</button>
+                        <button id="stopBtn">Stop Prediction Graph</button>
+                    </div>
+
+                </fieldset>
+                <div id="predGraph"></div>
+
+            </div>
         </div>
 
     </div>
