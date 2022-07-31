@@ -5,6 +5,7 @@ from dataprep.data_preparation import DataPreparation
 from graphs.graph_manager import GraphManager
 from managers.train_manager import TrainManager
 from managers.test_manager import TestManager
+from dataprep.process_realtime_data import ProcessRealtimeData
 import json
 
 
@@ -82,6 +83,15 @@ def test_model():
     buffer = TestManager.make_test_graph()
     return buffer
 
+@app.route('/runPredict')
+def run_predict():
+    file_name = 'static/slice1.csv'
+    scaler_filename = '/static/training_scaler.gz'
+    predict_window_size = 20
+    feature_names = ['sensor_25', 'sensor_11', 'sensor_36', 'sensor_34']
+    rtd = ProcessRealtimeData(predict_window_size, feature_names, scaler_filename, csv_filename=file_name)
+    rtd.process_points()
+    return Response(rtd.process_points(), mimetype='text/event-stream')
 
 
 if __name__ == '__main__':
