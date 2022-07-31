@@ -16,13 +16,13 @@ def main():
 def generate_data():
     #  col_name, points_group_size, regress_group_size, anomaly_std_factor are all obtained
     # from the form in the user interface.
-    regression_group_size = 80
+    regression_group_size = 40
     points_group_size = 1
-    #col_name = 'sensor_34'
-    col_name = 'pressure'
+    col_name = 'sensor_25'
+    #col_name = 'pressure'
     anomaly_std_factor = 4
-    file_name = 'static/casing1_corrected_scaled.csv'
-    #file_name = 'static/slice0_scaled.csv'
+    #file_name = 'static/casing1_corrected_scaled.csv'
+    file_name = 'static/slice0_scaled.csv'
 
     pdm = PreprocessDataManager(regression_group_size,
                                 points_group_size, col_name, anomaly_std_factor,

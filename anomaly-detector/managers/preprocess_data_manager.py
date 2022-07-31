@@ -11,7 +11,7 @@ class PreprocessDataManager:
     yields a message that contains json data that will be consumed.
 
     """
-    def __init__(self, regress_group_size, points_group_size, col_name, anomaly_std_factor, csv_file_name=None):
+    def __init__(self, regress_group_size, points_group_size, col_name, anomaly_std_factor, csv_file_name=None, use_csv=False, use_postgres=False):
         """
         :param regress_group_size:  Size in data points of how many points will be included in the linear regression
         calculation.
@@ -35,6 +35,8 @@ class PreprocessDataManager:
         self.regress_buffX = []   # Fixed size buffer.  Size is limited to value of self.regress_plot_size
         self.regress_buffY = []
         self.anomaly_std_factor = anomaly_std_factor  # Defines how many STD that determine an anomaly
+        self.use_csv = use_csv
+        self.use_postgres = use_postgres
 
 
     def process_point(self):
@@ -67,7 +69,13 @@ class PreprocessDataManager:
         y_percent_diff_old = 0
         plot_color = 'green'
         # This generator yields when one point is available from the data source
-        gen = SynthesizeDataManager.csv_line_reader(self.file_name, self.col_name)  # this is a generator
+        if (self.use_csv):
+            gen = SynthesizeDataManager.csv_line_reader(self.file_name, self.col_name)  # this is a generator
+        elif (self.use_postgres):
+            gen = SynthesizeDataManager.load_sensor(self.col_name)
+        else:
+            gen = SynthesizeDataManager.synthesize_data(self.col_name)
+
         while True:
             # print("rowcounter: {}".format(self.row_counter))
             # Use the generator's next() with a param of None.  If the generator is out of data, next() will
@@ -112,7 +120,7 @@ class PreprocessDataManager:
                                                  x_old_p, x_new_p, y_percent_diff_old, y_percent_diff,
                                                  plot_color, self.row_counter)
                     # print("Regress slope: {}   Regress intspt: {}".format(fit[0],fit[1]))
-                    # print("Server json data: {} ".format(json_data) )
+                    print("Server json data: {} ".format(json_data) )
                     y_percent_diff_old = y_percent_diff_new
                     plot_color = 'green'
                     self.row_counter = self.row_counter + self.points_group_size
