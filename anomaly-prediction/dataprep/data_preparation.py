@@ -256,6 +256,7 @@ class DataPreparation:
 
         data_transformed = pca.transform(scaled_data)  # ndarray
         df_transformed = pd.DataFrame(data_transformed)
+        #df_transformed = pd.DataFrame(scaled_data)
         # number of components
         n_features = pca.components_.shape[0]
 
@@ -392,8 +393,8 @@ class DataPreparation:
 
 
     @staticmethod
-    def make_predict_data( df, failure_times, feature_names,
-                                  timewindow_dimensions, window_len, stride, data_type):
+    def make_predict_data(scaled_numpy, alarm_col_df, feature_names,
+                                  window_len, stride):
 
         # [96*60, 12*60, 12*60, 5]
         '''
@@ -408,49 +409,30 @@ class DataPreparation:
                      float)  # [samples, timesteps, features].  Samples will be appended below
         Y = np.empty((1), float)
 
-        # For each failure_time, generate two arrays of data. First array starts well (timewindow_for_use[0]) before failure time
-        # and ends short(timewindow_for_use[1]) before the failure.
-        # Second time array starts where first array ends(timewindow_for_use[2] and ends close to the failure (timewindow_for_use[3])
-        for i, failure_time in enumerate(failure_times):
-            windows_start = failure_time - pd.Timedelta(
-                seconds=60 * timewindow_dimensions[0])  # mins before the failure time
-            windows_end = failure_time - pd.Timedelta(
-                seconds=60 * timewindow_dimensions[1])  # mins before the failure time
-            time_delt_min = windows_end - windows_start
-            # Feature data
-            df_prefailure_single_window_feature = df.loc[windows_start:windows_end, feature_names]
-            # Label data
-            df_prefailure_single_window_target = df.loc[windows_start:windows_end, 'alarm']
+        # Convert feature df and label df to lists
+        data_aslist = scaled_numpy.tolist()
+        targets_aslist = alarm_col_df.tolist()
 
-            # Convert feature df and label df to lists
-            data_aslist = df_prefailure_single_window_feature.to_numpy().tolist()
-            targets_aslist = df_prefailure_single_window_target.tolist()
+        data_gen1 = TimeseriesGenerator(data_aslist, targets_aslist, window_len,
+                                       stride=stride,
+                                       sampling_rate=1, batch_size=1, shuffle=False)
+        len_gen1 = len(data_gen1)
 
-            data_gen1 = TimeseriesGenerator(data_aslist, targets_aslist, window_len,
-                                           stride=stride,
-                                           sampling_rate=1, batch_size=1, shuffle=(data_type == DataTypeEnum.TRAIN))
-            len_gen1 = len(data_gen1)
-
-            print("len_gen1: {}   Train boolean: {}".format(len_gen1, data_type))
-
-            for i in range(len(data_gen1)):
-                x, y = data_gen1[i]
-                x = np.transpose(x).flatten()
-                x = x.reshape((1, 1, len(x)))
-                X = np.append(X, x, axis=0)
-                Y = np.append(Y, y / 2,
-                              axis=0)  # alarm windows are marked as 2, however, for the model,  use 1 becasue of the sigmoid function.
-                DataPreparation.progress_counter += 1
-                yield "event: inprogress\ndata: " + str(DataPreparation.progress_counter) + "\n\n"
+        for i in range(len(data_gen1)):
+            x, y = data_gen1[i]
+            x = np.transpose(x).flatten()
+            x = x.reshape((1, 1, len(x)))
+            X = np.append(X, x, axis=0)
+            Y = np.append(Y, y / 2,
+                          axis=0)  # alarm windows are marked as 2, however, for the model,  use 1 becasue of the sigmoid function.
+            # DataPreparation.progress_counter += 1
+            # yield "event: inprogress\ndata: " + str(DataPreparation.progress_counter) + "\n\n"
 
         # remove samples where y is neither 0 nor 1
         id_keep = [i for i, x in enumerate(Y) if (x == 1) or (x == 0)]
         y_data = Y[id_keep]
         X_data = X[id_keep][:, :]
-
-
-
-
+        return X_data, y_data
 
     # Prepare all data to be used for train and testing.  Store the results in Class Variables for easy retrieval
     @staticmethod
@@ -486,9 +468,10 @@ class DataPreparation:
         min_max_scaler = DataPreparation.get_scaler(df_train, sensor_names)
 
         # Save scaler for use in prediction
-        joblib.dump(min_max_scaler, 'static/training_scaler.gz')
+        #joblib.dump(min_max_scaler, 'static/training_scaler.gz')
 
         # Scale (transform) using the previously formed min_max_scaler.  Results are ndarray
+        # These scaled arrays are for all the sensors since PCA needs scaled data
         DataPreparation.scaled_train = DataPreparation.scale_dataframe(min_max_scaler, df_train, sensor_names)
         DataPreparation.scaled_test = DataPreparation.scale_dataframe(min_max_scaler, df_test, sensor_names)
         DataPreparation.scaled_val = DataPreparation.scale_dataframe(min_max_scaler, df_val, sensor_names)
@@ -501,16 +484,25 @@ class DataPreparation:
 
         num_features_to_include = 4
         DataPreparation.num_features_to_include = num_features_to_include
-        # transform_df_by_pca(pca, df_data, scaled_data, num_features_to_include, sensor_names):
         DataPreparation.df_train_pca = DataPreparation.transform_df_by_pca(
             DataPreparation.pca, df_train, DataPreparation.scaled_train,
             num_features_to_include, sensor_names)
         DataPreparation.df_test_pca = DataPreparation.transform_df_by_pca(
             DataPreparation.pca, df_test, DataPreparation.scaled_test,
-            num_features_to_include,sensor_names)
+            num_features_to_include, sensor_names)
         DataPreparation.df_val_pca = DataPreparation.transform_df_by_pca(
             DataPreparation.pca, df_val, DataPreparation.scaled_val,
             num_features_to_include, sensor_names)
+
+        # Make a scaler for only the training data with selected columns
+        # Get feature names in the model, leaving out 'machine_status' and 'alarm'
+        selected_feature_names = DataPreparation.df_train_pca.columns[:-2]
+        min_max_scaler = DataPreparation.get_scaler(df_train, selected_feature_names)
+
+        # Save scaler for use in prediction
+        joblib.dump(min_max_scaler, 'static/training_scaler.gz')
+
+
 
         ########## Stop here.  The above code can be done, but the code that follows must be done asynchronously since
         # it is time consuming
