@@ -1,4 +1,3 @@
-from collections import OrderedDict
 
 import pandas as pd
 import numpy as np
@@ -7,7 +6,6 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from utils.data_type_enum import DataTypeEnum
 import joblib
-
 
 from services.sensor_data_service import SensorDataServiceCSV
 
@@ -39,10 +37,11 @@ class DataPreparation:
     bad_cols = ['Unnamed: 0', 'sensor_00', 'sensor_15', 'sensor_50', 'sensor_51']
     job_size = 0
     progress_counter = 0
+    min_max_scaler = None
+    pca = None
 
     def __init__(self):
         DataPreparation.do_automated_data_prep()
-
 
     @staticmethod
     def get_df():
@@ -106,7 +105,6 @@ class DataPreparation:
 
         df['machine_status'] = np.select(status_values, numeric_status_values, default=0)
 
-
     @staticmethod
     def add_target_col(df, failure_times, start_offset, end_offset):
         """Create a new column that will contain values that indicate time window to do prediction
@@ -129,7 +127,8 @@ class DataPreparation:
                 seconds=60 * start_offset)  # mins before the failure time
             stop_predic_time = failure_time - pd.Timedelta(
                 seconds=60 * end_offset)  # mins before the failure time
-            df.loc[start_predic_time:stop_predic_time, 'alarm'] = 2  # can not use 1, because 1 indicates the machine failure time
+            df.loc[start_predic_time:stop_predic_time,
+            'alarm'] = 2  # can not use 1, because 1 indicates the machine failure time
 
     @staticmethod
     def get_failure_times(df):
@@ -166,24 +165,24 @@ class DataPreparation:
         return df_train, df_val, df_test
 
     @staticmethod
-    def get_scaler(training_data, sensor_names):
+    def get_scaler(training_df):
         """Get a scaler for training data
         Apply MinManScaler to the training data using the range (0, 1)
-        :param training_data:
+        :param training_df:
         :type: Pandas DataFrame
         :param sensor_names: List of sensor names(feature names)
         :type: list
         :return: scaler for the training data
         :type: MinMaxScaler
         """
+        sensor_names = training_df.columns[:-2]
         min_max_scaler = MinMaxScaler(feature_range=(0, 1))
-        scaler = min_max_scaler.fit(training_data[sensor_names])
+        scaler = min_max_scaler.fit(training_df[sensor_names])
 
         return scaler
 
-
     @staticmethod
-    def scale_dataframe(scaler, data_df, sensor_names):
+    def scale_dataframe(scaler, data_df):
         """Transform given dataframe using given scaler as applied to the given columns
 
         :param scaler: The scaler that has been fit to the dataframe
@@ -195,6 +194,7 @@ class DataPreparation:
         :return: array of scaled data
         :type: ndarray
         """
+        sensor_names = data_df.columns[:-2]
         scaled_data = scaler.transform(data_df[sensor_names])
         return scaled_data
 
@@ -211,7 +211,6 @@ class DataPreparation:
         """
         pca = PCA(n_components=num_components).fit(train_scaled_data)
         return pca
-
 
     @staticmethod
     def get_ranked_features(fit_pca, feature_names):
@@ -236,8 +235,9 @@ class DataPreparation:
         df_ranked_features = pd.DataFrame(name_dict.items())
         df_ranked_features.columns = ['Ranked Features', 'Variance Ratio']
         return df_ranked_features
+
     @staticmethod
-    def transform_df_by_pca(pca, df_data, scaled_data, num_features_to_include, sensor_names):
+    def transform_df_by_pca(pca, df_data, scaled_data, num_features_to_include):
         """Reduce the number of features in the training data by the parameter num_features_to_include.
 
         :param pca: The PCA for the training data
@@ -256,26 +256,11 @@ class DataPreparation:
 
         data_transformed = pca.transform(scaled_data)  # ndarray
         df_transformed = pd.DataFrame(data_transformed)
-        #df_transformed = pd.DataFrame(scaled_data)
-        # number of components
-        n_features = pca.components_.shape[0]
+        pcs = ['pc' + str(i + 1) for i in range(8)]
+        df_transformed.columns = pcs
 
-        # get the index of the most important feature on EACH component i.e. largest absolute value
-        most_important = [np.abs(pca.components_[i]).argmax() for i in range(n_features)]
-
-        # get the names
-        most_important_names = [sensor_names[most_important[i]] for i in range(n_features)]
-        no_duplications = list(OrderedDict.fromkeys(most_important_names))
-        no_duplications = no_duplications[0:(num_features_to_include)]
-
-        # Create a map between pca indexes (0,1,2,.....n_features) and most_important_names
-        dict1 = dict(zip(range(n_features), most_important_names))
-
-        df_transformed['machine_status'] = df_data['machine_status'].values
-        df_transformed['alarm'] = df_data['alarm'].values
         df_transformed.index = df_data.index
-        df_transformed.rename(columns=dict1, inplace=True)
-        df_smaller = df_transformed[no_duplications]
+        df_smaller = df_transformed[pcs[:num_features_to_include]]
         df_smaller['machine_status'] = df_data['machine_status'].values
         df_smaller['alarm'] = df_data['alarm'].values
 
@@ -283,7 +268,7 @@ class DataPreparation:
 
     """
     Generate LSTM data for time series segment used for training, testing and predicting
-   
+
     @:param df  The train, or test, or validation df
     @:param failure_times A Datetimeindex object that contains the failure times found in the df
         NOTE:  A failure is described in the time series by one time point, where 'machine_status' is 1.
@@ -295,8 +280,9 @@ class DataPreparation:
     @:param stride
      @:param data_type is one of the values in DataTypeEnum
     """
+
     @staticmethod
-    def timeseries_before_failure( df, failure_times, feature_names,
+    def timeseries_before_failure(df, failure_times, feature_names,
                                   timewindow_dimensions, window_len, stride, data_type):
 
         # [96*60, 12*60, 12*60, 5]
@@ -331,8 +317,8 @@ class DataPreparation:
             targets_aslist = df_prefailure_single_window_target.tolist()
 
             data_gen1 = TimeseriesGenerator(data_aslist, targets_aslist, window_len,
-                                           stride=stride,
-                                           sampling_rate=1, batch_size=1, shuffle=(data_type == DataTypeEnum.TRAIN))
+                                            stride=stride,
+                                            sampling_rate=1, batch_size=1, shuffle=(data_type == DataTypeEnum.TRAIN))
             len_gen1 = len(data_gen1)
 
             print("len_gen1: {}   Train boolean: {}".format(len_gen1, data_type))
@@ -363,7 +349,7 @@ class DataPreparation:
                 targets = df_prefailure_single_window_target.tolist()
 
                 data_gen2 = TimeseriesGenerator(data, targets, window_len, stride=1,
-                                                                               sampling_rate=1, batch_size=1, shuffle=True)
+                                                sampling_rate=1, batch_size=1, shuffle=True)
                 len_gen2 = len(data_gen2)
 
                 print("len_gen2: {}    Train boolean: {}".format(len_gen2, data_type))
@@ -391,10 +377,9 @@ class DataPreparation:
             DataPreparation.X_val = X_data
             DataPreparation.y_val = y_data
 
-
     @staticmethod
     def make_predict_data(scaled_numpy, alarm_col_df, feature_names,
-                                  window_len, stride):
+                          window_len, stride):
 
         # [96*60, 12*60, 12*60, 5]
         '''
@@ -414,8 +399,8 @@ class DataPreparation:
         targets_aslist = alarm_col_df.tolist()
 
         data_gen1 = TimeseriesGenerator(data_aslist, targets_aslist, window_len,
-                                       stride=stride,
-                                       sampling_rate=1, batch_size=1, shuffle=False)
+                                        stride=stride,
+                                        sampling_rate=1, batch_size=1, shuffle=False)
         len_gen1 = len(data_gen1)
 
         for i in range(len(data_gen1)):
@@ -463,22 +448,24 @@ class DataPreparation:
         DataPreparation.replace_nan_with_mean(df_val)
         DataPreparation.replace_nan_with_mean(df_test)
 
-        sensor_names = df_train.columns.tolist()[:-2]  # Get sensor names, omitting last two columns ('machine_status', 'Operation')
-        #  Get scaler that has been fit to training data
-        min_max_scaler = DataPreparation.get_scaler(df_train, sensor_names)
 
+        #  Get scaler that has been fit to training data
+        DataPreparation.min_max_scaler = DataPreparation.get_scaler(df_train)
         # Save scaler for use in prediction
-        #joblib.dump(min_max_scaler, 'static/training_scaler.gz')
+        joblib.dump(DataPreparation.min_max_scaler, 'static/training_scaler.gz')
 
         # Scale (transform) using the previously formed min_max_scaler.  Results are ndarray
         # These scaled arrays are for all the sensors since PCA needs scaled data
-        DataPreparation.scaled_train = DataPreparation.scale_dataframe(min_max_scaler, df_train, sensor_names)
-        DataPreparation.scaled_test = DataPreparation.scale_dataframe(min_max_scaler, df_test, sensor_names)
-        DataPreparation.scaled_val = DataPreparation.scale_dataframe(min_max_scaler, df_val, sensor_names)
+        DataPreparation.scaled_train = DataPreparation.scale_dataframe(DataPreparation.min_max_scaler, df_train)
+        DataPreparation.scaled_test = DataPreparation.scale_dataframe(DataPreparation.min_max_scaler, df_test)
+        DataPreparation.scaled_val = DataPreparation.scale_dataframe(DataPreparation.min_max_scaler, df_val)
+
 
         num_top_components = 8  # only give top 8 features
         # Get PCA df to determine which top features to include
         DataPreparation.pca = DataPreparation.get_PCA(DataPreparation.scaled_train, num_top_components)
+        # Save PCA for use on prediction data
+        joblib.dump(DataPreparation.pca, 'static/pca.gz')
         # Get Dataframe of ranked features determined by PCA
         DataPreparation.ranked_features = DataPreparation.get_ranked_features(DataPreparation.pca, df_train.columns)
 
@@ -486,34 +473,19 @@ class DataPreparation:
         DataPreparation.num_features_to_include = num_features_to_include
         DataPreparation.df_train_pca = DataPreparation.transform_df_by_pca(
             DataPreparation.pca, df_train, DataPreparation.scaled_train,
-            num_features_to_include, sensor_names)
+            num_features_to_include)
         DataPreparation.df_test_pca = DataPreparation.transform_df_by_pca(
             DataPreparation.pca, df_test, DataPreparation.scaled_test,
-            num_features_to_include, sensor_names)
+            num_features_to_include)
         DataPreparation.df_val_pca = DataPreparation.transform_df_by_pca(
             DataPreparation.pca, df_val, DataPreparation.scaled_val,
-            num_features_to_include, sensor_names)
-
-        # Make a scaler for only the training data with selected columns
-        # Get feature names in the model, leaving out 'machine_status' and 'alarm'
-        selected_feature_names = DataPreparation.df_train_pca.columns[:-2]
-        min_max_scaler = DataPreparation.get_scaler(df_train, selected_feature_names)
-
-        # Save scaler for use in prediction
-        joblib.dump(min_max_scaler, 'static/training_scaler.gz')
+            num_features_to_include)
 
 
-
-        ########## Stop here.  The above code can be done, but the code that follows must be done asynchronously since
-        # it is time consuming
-
-
-     # Finish data prep that wasn't done in do_automated_data_prep().
+    # Finish data prep that wasn't done in do_automated_data_prep().
     # This method should be done as an asychronous process so that the page does not get blocked.
     @staticmethod
     def finish_data_prep():
-
-
 
         feature_names = DataPreparation.df_train_pca.columns.tolist()[:-2]
 
@@ -521,39 +493,39 @@ class DataPreparation:
         test_failure_times = DataPreparation.get_failure_times(DataPreparation.df_test_pca)
         val_failure_times = DataPreparation.get_failure_times(DataPreparation.df_val_pca)
 
-        DataPreparation.job_size = DataPreparation.calculate_job_size(train_failure_times, test_failure_times, val_failure_times)
+        DataPreparation.job_size = DataPreparation.calculate_job_size(train_failure_times, test_failure_times,
+                                                                      val_failure_times)
 
         print("Calculated job size:  {}".format(DataPreparation.job_size))
 
         DataPreparation.progress_counter = 0
         yield "event: initialize\ndata: " + str(DataPreparation.job_size) + "\n\n"
 
-
-
         # Train windows use DataPreparation.stride for first windows, then stride=1 for second group.
 
-        yield from DataPreparation.timeseries_before_failure(DataPreparation.df_train_pca, train_failure_times, feature_names,
-                                                     DataPreparation.train_time_window_dimensions,
-                                                     DataPreparation.window_size, DataPreparation.stride,
-                                                     data_type = DataTypeEnum.TRAIN)
+        yield from DataPreparation.timeseries_before_failure(DataPreparation.df_train_pca, train_failure_times,
+                                                             feature_names,
+                                                             DataPreparation.train_time_window_dimensions,
+                                                             DataPreparation.window_size, DataPreparation.stride,
+                                                             data_type=DataTypeEnum.TRAIN)
 
         # Test and Val use stride = 1 by default, no matter what gets passed in the call.
 
-        yield from DataPreparation.timeseries_before_failure(DataPreparation.df_test_pca, test_failure_times, feature_names,
-                                                   DataPreparation.test_time_window_dimensions,
-                                                   DataPreparation.window_size, DataPreparation.stride,
-                                                   data_type = DataTypeEnum.TEST)
+        yield from DataPreparation.timeseries_before_failure(DataPreparation.df_test_pca, test_failure_times,
+                                                             feature_names,
+                                                             DataPreparation.test_time_window_dimensions,
+                                                             DataPreparation.window_size, DataPreparation.stride,
+                                                             data_type=DataTypeEnum.TEST)
 
         # Use same window dimensions for test and val
 
-        yield from DataPreparation.timeseries_before_failure(DataPreparation.df_val_pca, val_failure_times, feature_names,
-                                                     DataPreparation.test_time_window_dimensions,
-                                                     DataPreparation.window_size, DataPreparation.stride,
-                                                     data_type = DataTypeEnum.VAL)
+        yield from DataPreparation.timeseries_before_failure(DataPreparation.df_val_pca, val_failure_times,
+                                                             feature_names,
+                                                             DataPreparation.test_time_window_dimensions,
+                                                             DataPreparation.window_size, DataPreparation.stride,
+                                                             data_type=DataTypeEnum.VAL)
 
         yield "event: jobfinished\ndata: " + "\n\n"
-
-
 
         """
                 num_time_steps_for_input = 1
@@ -575,27 +547,30 @@ class DataPreparation:
         # Training iterations
         for failure_time in train_failure_times:
             first_window_size_in_minutes = \
-                DataPreparation.calculate_time_window_delta(failure_time, DataPreparation.train_time_window_dimensions[0],
+                DataPreparation.calculate_time_window_delta(failure_time,
+                                                            DataPreparation.train_time_window_dimensions[0],
                                                             DataPreparation.train_time_window_dimensions[1]) / 5
             job_size += first_window_size_in_minutes + progress_adjustment_gen1
             second_window_size_in_minutes = \
-                DataPreparation.calculate_time_window_delta(failure_time, DataPreparation.train_time_window_dimensions[2],
+                DataPreparation.calculate_time_window_delta(failure_time,
+                                                            DataPreparation.train_time_window_dimensions[2],
                                                             DataPreparation.train_time_window_dimensions[3])
             job_size += second_window_size_in_minutes + progress_adjustment_gen2
             # Test iterations
         for failure_time in test_failure_times:
-            window_size_in_minutes =\
-                DataPreparation.calculate_time_window_delta(failure_time, DataPreparation.test_time_window_dimensions[0],
+            window_size_in_minutes = \
+                DataPreparation.calculate_time_window_delta(failure_time,
+                                                            DataPreparation.test_time_window_dimensions[0],
                                                             DataPreparation.test_time_window_dimensions[1])
             job_size += window_size_in_minutes + progress_adjustment_gen2
         # Val iterations.  NOTE: Val iterations are same as test since it uses same time_window_dimension
         for failure_time in val_failure_times:
-            window_size_in_minutes =\
-                DataPreparation.calculate_time_window_delta(failure_time, DataPreparation.test_time_window_dimensions[0],
+            window_size_in_minutes = \
+                DataPreparation.calculate_time_window_delta(failure_time,
+                                                            DataPreparation.test_time_window_dimensions[0],
                                                             DataPreparation.test_time_window_dimensions[1])
             job_size += window_size_in_minutes + progress_adjustment_gen2
         return job_size
-
 
     @staticmethod
     def calculate_time_window_delta(failure_time, start_offset, end_offset):
