@@ -20,5 +20,5 @@ class DataSourceManager:
             for row in dict_reader:
                 # print("row in reader: {}".format(row))
                 time.sleep(1 / 10)
-                yield [row]
+                yield row
 
