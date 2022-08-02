@@ -1,0 +1,9 @@
+keras~=2.6.0
+tensorflow~=2.6.3
+numpy~=1.19.5
+Flask~=2.0.1
+pandas~=1.4.1
+matplotlib~=3.5.1
+plotly~=5.5.0
+joblib~=1.1.0
+scikit-learn~=1.0.2
