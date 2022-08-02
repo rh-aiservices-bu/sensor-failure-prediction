@@ -5,8 +5,8 @@
 // 'jobfinished'.  There is also a listener for 'initialize', but it is not needed in this application.
 
 
-let startPlotBtn = document.getElementById("startBtn");
-let stopPlotBtn = document.getElementById("stopBtn");
+let startPlotBtn = document.getElementById("startPredictBtn");
+let stopPlotBtn = document.getElementById("stopPredictBtn");
 startPlotBtn.addEventListener('click', startPlotProcess);
 stopPlotBtn.addEventListener('click', stopPlotProcess);
 
@@ -21,7 +21,7 @@ function startPlotProcess(){
     // Create a JS EventSource object and give it the URL of a long running task.  The EventSource object
     // keeps the connection open to the given URL so that the process at the end point can send messages
     // back to the EventSource object.
-    eventSourceGraph = new EventSource("/generateData");
+    eventSourceGraph = new EventSource("/runPredict");
 
     // NOTE:  This event 'initialize' is currently not used
     eventSourceGraph.addEventListener("initialize", function(event){
