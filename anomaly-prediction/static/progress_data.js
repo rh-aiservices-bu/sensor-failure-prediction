@@ -28,10 +28,10 @@ function startProcess(){
         jobSize = progressBarObj.max;
         progressBarObj.value = event.data;
         //progressBarObj.max = jobSize;
-        console.log("progressBar value: "+ progressBarObj.value);
+        //console.log("progressBar value: "+ progressBarObj.value);
         let percent = (progressBarObj.value * 100)/ jobSize;
         progressTextObj.innerHTML = (Math.round(percent) ).toString() + "%";
-        console.log("data: " + event.data + "  jobSize: " +  jobSize + "    percent: " + Math.round(percent));
+        //console.log("data: " + event.data + "  jobSize: " +  jobSize + "    percent: " + Math.round(percent));
         //if (event.data == 100) {
         //    eventSource.close();
         //}
