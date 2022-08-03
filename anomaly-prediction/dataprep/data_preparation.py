@@ -226,14 +226,20 @@ class DataPreparation:
         :return: DataFrame of ranked features
         :type: Pandas DataFrame
         """
+        feature_names = ['pc' + str(i + 1) for i in range(20)]
+
         num_components = fit_pca.components_.shape[0]
-        most_important_indexes = [np.abs(fit_pca.components_[i]).argmax() for i in range(num_components)]
-        most_important_names = [feature_names[most_important_indexes[i]] for i in range(num_components)]
+        components = fit_pca.components_
+        var_ratio = fit_pca.explained_variance_ratio_
+
+
+       # most_important_indexes = [np.abs(fit_pca.components_[i]).argmax() for i in range(num_components)]
+       # most_important_names = [feature_names[most_important_indexes[i]] for i in range(num_components)]
         # bundle ranked important feature names with variance ratio
-        name_dict = {most_important_names[i]: fit_pca.explained_variance_ratio_[i] for i in range(num_components)}
+        name_dict = {feature_names[i]: fit_pca.explained_variance_ratio_[i] for i in range(num_components)}
 
         df_ranked_features = pd.DataFrame(name_dict.items())
-        df_ranked_features.columns = ['Ranked Features', 'Variance Ratio']
+        df_ranked_features.columns = ['Ranked Components', 'Variance Ratio']
         return df_ranked_features
 
     @staticmethod
@@ -256,7 +262,7 @@ class DataPreparation:
 
         data_transformed = pca.transform(scaled_data)  # ndarray
         df_transformed = pd.DataFrame(data_transformed)
-        pcs = ['pc' + str(i + 1) for i in range(8)]
+        pcs = ['pc' + str(i + 1) for i in range(pca.n_components_)]
         df_transformed.columns = pcs
 
         df_transformed.index = df_data.index
@@ -460,16 +466,18 @@ class DataPreparation:
         DataPreparation.scaled_test = DataPreparation.scale_dataframe(DataPreparation.min_max_scaler, df_test)
         DataPreparation.scaled_val = DataPreparation.scale_dataframe(DataPreparation.min_max_scaler, df_val)
 
-
-        num_top_components = 8  # only give top 8 features
+        # This value will give the number of PC to make the sum of explained_variance_ratio reach 0.95
+        num_top_components = 0.95
         # Get PCA df to determine which top features to include
-        DataPreparation.pca = DataPreparation.get_PCA(DataPreparation.scaled_train, num_top_components)
+        pca_fit = DataPreparation.get_PCA(DataPreparation.scaled_train, num_top_components)
+        DataPreparation.pca = pca_fit
+        # Get the number of PC that are needed to make the sum of explained_variance_ratio reach 0.95
+        num_features_to_include = pca_fit.n_components_
         # Save PCA for use on prediction data
         joblib.dump(DataPreparation.pca, 'static/pca.gz')
         # Get Dataframe of ranked features determined by PCA
         DataPreparation.ranked_features = DataPreparation.get_ranked_features(DataPreparation.pca, df_train.columns)
 
-        num_features_to_include = 4
         DataPreparation.num_features_to_include = num_features_to_include
         DataPreparation.df_train_pca = DataPreparation.transform_df_by_pca(
             DataPreparation.pca, df_train, DataPreparation.scaled_train,
@@ -527,17 +535,6 @@ class DataPreparation:
 
         yield "event: jobfinished\ndata: " + "\n\n"
 
-        """
-                num_time_steps_for_input = 1
-                num_time_steps_for_output = 1
-                df_train_for_supervised = DataPreparation.series_to_supervised(df_train_pca, num_time_steps_for_input, num_time_steps_for_output)
-                df_test_for_supervised =  DataPreparation.series_to_supervised(df_test_pca, num_time_steps_for_input, num_time_steps_for_output)
-                df_val_for_supervised =   DataPreparation.series_to_supervised(df_val_pca, num_time_steps_for_input, num_time_steps_for_output)
-
-                df_reshaped_train = DataPreparation.reshape_data(df_train_for_supervised, num_time_steps_for_input)
-                df_reshaped_test = DataPreparation.reshape_data(df_test_for_supervised, num_time_steps_for_input)
-                df_reshaped_val = DataPreparation.reshape_data(df_val_for_supervised, num_time_steps_for_input)
-                """
 
     @staticmethod
     def calculate_job_size(train_failure_times, test_failure_times, val_failure_times):
