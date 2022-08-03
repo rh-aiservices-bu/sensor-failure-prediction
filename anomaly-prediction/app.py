@@ -1,12 +1,12 @@
 from flask import Flask, render_template, Response, request, jsonify
-from pandas import Series
 
 from dataprep.data_preparation import DataPreparation
 from graphs.graph_manager import GraphManager
 from managers.train_manager import TrainManager
 from managers.test_manager import TestManager
 from dataprep.process_realtime_data import ProcessRealtimeData
-import json
+import warnings
+warnings.filterwarnings('ignore')
 
 
 
