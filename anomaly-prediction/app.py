@@ -31,7 +31,7 @@ def init_data():
     # Extract data from the appropriate class variables in the DataPreparation object.
     nulls_series = DataPreparation.original_null_list  # List of each sensor's count of nulls
     bad_cols = DataPreparation.bad_cols   # List of columns that will be dropped from the feature list
-    ranked_features = DataPreparation.ranked_features  # PCA rank of the top 8 features
+    ranked_features = DataPreparation.ranked_features  # PCA rank of the top n features
     ranked_array = ranked_features.to_numpy()
     num_features_to_include = DataPreparation.num_features_to_include  # How name features that will be included in the training
     feature_names_to_include = ranked_array[0:num_features_to_include, 0]  # Feature names that will be included in the training
