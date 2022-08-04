@@ -11,7 +11,7 @@ class PreprocessDataManager:
     yields a message that contains json data that will be consumed.
 
     """
-    def __init__(self, regress_group_size, points_group_size, col_name, anomaly_std_factor, csv_file_name=None, use_csv=False, use_postgres=False):
+    def __init__(self, data_source, regress_group_size, points_group_size, col_name, anomaly_std_factor, max_window_size, speed_up, csv_file_name=None):
         """
         :param regress_group_size:  Size in data points of how many points will be included in the linear regression
         calculation.
@@ -27,16 +27,16 @@ class PreprocessDataManager:
         :type: string
         """
         self.row_counter = 0
+        self.data_source = data_source
         self.regress_plot_size = regress_group_size  # Number of points used to calculate linear regression line
         self.points_group_size = points_group_size  # Not used in this first version
         self.col_name = col_name  # col name of feature to plot
         self.file_name = csv_file_name
-        self.init_plot()   # Initialize plot
         self.regress_buffX = []   # Fixed size buffer.  Size is limited to value of self.regress_plot_size
         self.regress_buffY = []
         self.anomaly_std_factor = anomaly_std_factor  # Defines how many STD that determine an anomaly
-        self.use_csv = use_csv
-        self.use_postgres = use_postgres
+        self.speed_up = speed_up
+        self.max_window_size = max_window_size
 
 
     def process_point(self):
@@ -68,13 +68,19 @@ class PreprocessDataManager:
         x_old_idx = 0
         y_percent_diff_old = 0
         plot_color = 'green'
+        graphRange = [0,1]
+
         # This generator yields when one point is available from the data source
-        if (self.use_csv):
-            gen = SynthesizeDataManager.csv_line_reader(self.file_name, self.col_name)  # this is a generator
-        elif (self.use_postgres):
-            gen = SynthesizeDataManager.load_sensor(self.col_name)
+        if (self.data_source == 'csv'):
+            gen = SynthesizeDataManager.csv_line_reader(self.file_name, self.col_name, self.speed_up)  # this is a generator
+        elif (self.data_source == 'postgres'):
+            gen = SynthesizeDataManager.load_sensor(self.col_name, self.speed_up)
         else:
-            gen = SynthesizeDataManager.synthesize_data(self.col_name)
+            gen = SynthesizeDataManager.synthesize_data(self.col_name, self.speed_up)
+
+        #graphRange = SynthesizeDataManager.return_range()
+        #print(graphRange)
+        self.init_plot(graphRange)   # Initialize plot
 
         while True:
             # print("rowcounter: {}".format(self.row_counter))
@@ -118,7 +124,7 @@ class PreprocessDataManager:
                     json_data = self.create_json(timestamp, sensor_val,
                                                  x_start_p, x_end_p, y_start_p, y_end_p,
                                                  x_old_p, x_new_p, y_percent_diff_old, y_percent_diff,
-                                                 plot_color, self.row_counter)
+                                                 plot_color, self.row_counter, self.max_window_size)
                     # print("Regress slope: {}   Regress intspt: {}".format(fit[0],fit[1]))
                     print("Server json data: {} ".format(json_data) )
                     y_percent_diff_old = y_percent_diff_new
@@ -133,7 +139,7 @@ class PreprocessDataManager:
                     # the sensor data as points.
                     self.row_counter = self.row_counter + self.points_group_size
                     json_data = self.create_json(timestamp, sensor_val, None, None, None, None, None,
-                                                 None, None, None, None, None)
+                                                 None, None, None, None, None, max_window_size=self.max_window_size)
                     yield "event: update\ndata: " + json.dumps(json_data) + "\n\n"
                     next(gen)
 
@@ -211,7 +217,7 @@ class PreprocessDataManager:
 
     def create_json(self, timestamp, sensor_val,
                         x1, x2, y1, y2, x_old_p, x_new_p, y_percent_diff_old,
-                        y_percent_diff, plot_color, row_counter):
+                        y_percent_diff, plot_color, row_counter, max_window_size):
         """Put all parameters into a JSON string
 
         :param timestamp:
@@ -237,15 +243,17 @@ class PreprocessDataManager:
                               'y_diff1': y_percent_diff_old,
                               'y_diff2': y_percent_diff,
                               'plot_color': plot_color,
-                              'row_counter': row_counter
+                              'row_counter': row_counter,
+                              'max_window_size': max_window_size
                               }
                      }
         return plot_dict
 
-    def init_plot(self):
+    def init_plot(self, graphRange):
         """Currently not used"""
         print("PreprocessDataManager.init_plot()")
-        yield "event: initialize\ndata: " + "none" + "\n\n"
+        json_data = self.create_json(graphRange)
+        yield "event: initialize\ndata: " + json.dumps(json_data) + "\n\n"
 
     def stop_plot(self):
         """Currently not used"""
