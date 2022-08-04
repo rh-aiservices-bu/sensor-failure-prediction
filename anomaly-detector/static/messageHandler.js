@@ -4,28 +4,35 @@
 // application there are three event messages that are pushed to the browser: 'update', and
 // 'jobfinished'.  There is also a listener for 'initialize', but it is not needed in this application.
 
+const startPlotBtn = document.getElementById("startPlotBtn");
+const stopPlotBtn = document.getElementById("stopPlotBtn");
 
-let startPlotBtn = document.getElementById("startPlotBtn");
-let stopPlotBtn = document.getElementById("stopPlotBtn");
-startPlotBtn.addEventListener('click', startPlotProcess);
+
+startPlotBtn.addEventListener("click", startPlotProcess);
 stopPlotBtn.addEventListener('click', stopPlotProcess);
+
 
 let eventSourceGraph;
 
 function startPlotProcess(){
     console.log("startProcess()");
     initPlot();
-    if(eventSourceGraph){
+    try {
         eventSourceGraph.close();
+    } catch (e) {
+        if (e instanceof ReferenceError) {
+            // Handle error as necessarys
+        }
     }
     // Create a JS EventSource object and give it the URL of a long running task.  The EventSource object
     // keeps the connection open to the given URL so that the process at the end point can send messages
     // back to the EventSource object.
-    eventSourceGraph = new EventSource("/generateData");
+    url = '/graphData'
+    eventSourceGraph = new EventSource(url);
 
     // NOTE:  This event 'initialize' is currently not used
     eventSourceGraph.addEventListener("initialize", function(event){
-        initPlot();
+        initPlot(event.data);
     }, false);
 
     // "update" Event gets current job progress (how many iterations have been completed")
