@@ -56,8 +56,9 @@ class Data_Synthesizer:
         date_from = datetime.datetime.strptime('2017-04-08', '%Y-%m-%d')
         dates = []
         for row in range(100000):
-            dates.append(str(date_from + datetime.timedelta(hours=(3*row))))
+            dates.append(str(date_from + datetime.timedelta(minutes=(row))))
 
+        print(dates[0])
         reshaped_df['timestamp'] = dates
         return reshaped_df
 
