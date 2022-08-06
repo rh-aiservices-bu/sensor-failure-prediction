@@ -6,12 +6,16 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from utils.data_type_enum import DataTypeEnum
 import joblib
+import tensorflow as tf
 
 from services.sensor_data_service import SensorDataServiceCSV
 
 
 class DataPreparation:
-    # Class variables for easy retrieval of data
+    """Prepare training and testing data
+    This class holds in class variables all the prepared training and testing data.  In addition there is a method called
+    make_predict_data() that transforms the prepared data into a form that is recognized by the LSTM model
+    """
     failure_times = None
     pca = None
     # 3 DataFrames of scaled and PCA data
@@ -42,6 +46,7 @@ class DataPreparation:
 
     def __init__(self):
         DataPreparation.do_automated_data_prep()
+        joblib.dump(DataPreparation.bad_cols, 'static/bad_cols.gz')
 
     @staticmethod
     def get_df():
@@ -56,7 +61,7 @@ class DataPreparation:
     # Drop columns in given list
     @staticmethod
     def drop_bad_cols(df, col_list):
-        """Drop unusable columns
+        """Drop unusable columns inplace
 
         :param df: DataFrame
         :type: Pandas DataFrame
@@ -83,7 +88,7 @@ class DataPreparation:
     @staticmethod
     def replace_nan_with_mean(df):
         """
-        Replace NaN columnwise with mean of each column
+        Replace NaN columnwise with mean of each column inplace
         :param df: DataFrame
         :type: Pandas DataFrame
         :return: none
@@ -228,13 +233,8 @@ class DataPreparation:
         """
         feature_names = ['pc' + str(i + 1) for i in range(20)]
 
-        num_components = fit_pca.components_.shape[0]
-        components = fit_pca.components_
-        var_ratio = fit_pca.explained_variance_ratio_
+        num_components = fit_pca.n_components_
 
-
-       # most_important_indexes = [np.abs(fit_pca.components_[i]).argmax() for i in range(num_components)]
-       # most_important_names = [feature_names[most_important_indexes[i]] for i in range(num_components)]
         # bundle ranked important feature names with variance ratio
         name_dict = {feature_names[i]: fit_pca.explained_variance_ratio_[i] for i in range(num_components)}
 
@@ -252,11 +252,13 @@ class DataPreparation:
         :type: Pandas DataFrame
         :param scaled_data: Array of scaled data
         :type: ndarray
-        :param num_features_to_include: Number of features to include in training
+        :param num_features_to_include: Number of features to include.  Currently, this number is auto-determined
+        by the num of PC's that were chosen by the PCA to reach 95% ( sum of explained_variance_ratio)
         :type: int
         :param sensor_names: List of sensor names that will be included
         :type: List of string
-        :return: Training data that has been scaled and whose dimensions have been reduced
+        :return: DataFrame with data that has been scaled and whose dimensions have been reduced.  This DataFrame has
+        the same index as the param df_data
         :type: Pandas DataFrame
         """
 
@@ -290,14 +292,29 @@ class DataPreparation:
     @staticmethod
     def timeseries_before_failure(df, failure_times, feature_names,
                                   timewindow_dimensions, window_len, stride, data_type):
-
-        # [96*60, 12*60, 12*60, 5]
-        '''
+        """Generate data samples that have a shape that is compatible with the LSTM layers
         Generate data samples using the time windows ahead of each machine failure time;
-        window_len: how many data points from each feature will be used to make one sample for the model.
-        stride: sliding window size
         Transform original df from a 2D array [samples, features] to a 3D array [samples, timesteps, features*window_len]
-        '''
+        :param df: Dataframe of scaled, PCA-transformed data
+        :type: Pandas Dataframe
+        :param failure_times: List of failure times as determined by the condition that 'machine_status' is 1 (BROKEN)
+        :type: list of string dates
+        :param feature_names: List of PC col names ('PC1', 'PC2', ..... etc)
+        :type: list of string
+        :param timewindow_dimensions: List of time (in minutes) offsets from the failure time for start and end
+        of the window under consideration
+        :type: list
+        :param window_len: How many time points will be used in prediction.  Namely, how many points will be used to
+        predict next time point.
+        :type: int
+        :param stride: How many points will be batched for train or test within window_len time points
+        :type: int
+        :param data_type: One of DataTypeEnum ( TRAIN = 1, TEST = 2, VAL = 3)
+        NOTE:  There is no return value, however the the 3-D ndarrays are stored in class variables of this
+        class (DataPreparation)
+        :return: none
+        """
+
         if data_type is not DataTypeEnum.TRAIN:
             stride = 1
         X = np.empty((1, 1, window_len * len(feature_names)),
@@ -312,7 +329,7 @@ class DataPreparation:
                 seconds=60 * timewindow_dimensions[0])  # mins before the failure time
             windows_end = failure_time - pd.Timedelta(
                 seconds=60 * timewindow_dimensions[1])  # mins before the failure time
-            time_delt_min = windows_end - windows_start
+
             # Feature data
             df_prefailure_single_window_feature = df.loc[windows_start:windows_end, feature_names]
             # Label data
@@ -369,7 +386,7 @@ class DataPreparation:
                     DataPreparation.progress_counter += 1
                     yield "event: inprogress\ndata: " + str(DataPreparation.progress_counter) + "\n\n"
         # remove samples where y is neither 0 nor 1
-        id_keep = [i for i, x in enumerate(Y) if (x == 1) or (x == 0)]
+        id_keep = [i for i, y in enumerate(Y) if (y == 1) | (y == 0)]
         y_data = Y[id_keep]
         X_data = X[id_keep][:, :]
         print("Actual counter: {}    Train boolean: {}".format(DataPreparation.progress_counter, data_type))
@@ -384,30 +401,40 @@ class DataPreparation:
             DataPreparation.y_val = y_data
 
     @staticmethod
-    def make_predict_data(scaled_numpy, alarm_col_df, feature_names,
-                          window_len, stride):
-
-        # [96*60, 12*60, 12*60, 5]
-        '''
-        Generate data samples using the time windows ahead of each machine failure time;
+    def make_predict_data(pca_df, feature_names,
+                          window_len):
+        """Transform 2D data to 3D that is compatible with LSTM layers.
+         Generate data samples using the time windows ahead of each machine failure time;
         window_len: how many data points from each feature will be used to make one sample for the model.
         stride: sliding window size
         Transform original df from a 2D array [samples, features] to a 3D array [samples, timesteps, features*window_len]
-        '''
+        :param pca_df: Dataframe of the prediction data that has been scaled and PCA transformed
+        :type: DataFrame
+        :param feature_names: List of PCA feature names (PC1, PC2, etc.)
+        :type: list
+        :param window_len:  Length of the prediction window in terms of data points.  This number determines how many
+        data points will be used to predict the next point.  For example, if length is 20, it means that 19 points will be
+        used to predict the 20th point
+
+        :return: Feature data and label data in a form that can be used by the LSTM model
+        :type: tuple.  First entry is a numpy array of shape (samples_size, 1, window_len * len(feature_names), second
+        entry is a numpy array of predictions
+
+        """
 
         stride = 1
         X = np.empty((1, 1, window_len * len(feature_names)),
-                     float)  # [samples, timesteps, features].  Samples will be appended below
+                     float)  # [samples, 1, n_features*window_len].  Samples will be appended below
         Y = np.empty((1), float)
 
         # Convert feature df and label df to lists
-        data_aslist = scaled_numpy.tolist()
-        targets_aslist = alarm_col_df.tolist()
+        # using pca_df get data for feature cols and targets for 'alarm' col
+        data_as_list = pca_df[feature_names].to_numpy().tolist()
+        targets_as_list = pca_df['alarm'].tolist()
 
-        data_gen1 = TimeseriesGenerator(data_aslist, targets_aslist, window_len,
+        data_gen1 = TimeseriesGenerator(data_as_list, targets_as_list, window_len,
                                         stride=stride,
                                         sampling_rate=1, batch_size=1, shuffle=False)
-        len_gen1 = len(data_gen1)
 
         for i in range(len(data_gen1)):
             x, y = data_gen1[i]
@@ -420,18 +447,28 @@ class DataPreparation:
             # yield "event: inprogress\ndata: " + str(DataPreparation.progress_counter) + "\n\n"
 
         # remove samples where y is neither 0 nor 1
-        id_keep = [i for i, x in enumerate(Y) if (x == 1) or (x == 0)]
+        id_keep = [i for i, y in enumerate(Y) if (tf.round(y) == 1) or (tf.round(y) == 0)]
+        # First row is zeros, so delete it
+        id_keep = np.delete(id_keep, 0)
         y_data = Y[id_keep]
         X_data = X[id_keep][:, :]
         return X_data, y_data
 
+
     # Prepare all data to be used for train and testing.  Store the results in Class Variables for easy retrieval
     @staticmethod
     def do_automated_data_prep():
+        """Initial Data preparation
+        Data preparation is divided into 2 parts.  This method is part 1.  In this method, train and test data
+        have nan's replaced  by the means of each column.  The data is scaled and then transformed by PCA.  In addition,
+        the scaler and PCA transformation matrix are saved to the static project folder.  This method is done as an
+        asynchronous call so that the web page can load and not be blocked until this method finishes.
+        :return: none. NOTE: even though this method has no return values, it still puts all of the prepared data into
+        class variables of this class.
+        """
         df = DataPreparation.get_df()
         # Get a series that shows how many nulls in each column.
         count_nulls_per_column = DataPreparation.get_null_list(df)
-        # print(count_nulls_per_column)
         # After human intervention, determine which cols to drop based on the nulls per column above.
         # Eventually the GUI will present the nuls count per column and the user will select cols to drop
         bad_cols = ['Unnamed: 0', 'sensor_00', 'sensor_15', 'sensor_50', 'sensor_51']
@@ -454,6 +491,9 @@ class DataPreparation:
         DataPreparation.replace_nan_with_mean(df_val)
         DataPreparation.replace_nan_with_mean(df_test)
 
+        # Calculate mean of each column in the training df.  Then save the mean df.
+        mean_df = df_train.mean()
+        joblib.dump(mean_df, 'static/mean.gz')
 
         #  Get scaler that has been fit to training data
         DataPreparation.min_max_scaler = DataPreparation.get_scaler(df_train)
@@ -494,6 +534,11 @@ class DataPreparation:
     # This method should be done as an asychronous process so that the page does not get blocked.
     @staticmethod
     def finish_data_prep():
+        """Finish part 2 of the data preparation.  The processing done in this method is time intensive, so it is done
+        as a generator that yields progress values back to the browser.
+
+        :return: none.  NOTE: this method is a generator and yields progress values
+        """
 
         feature_names = DataPreparation.df_train_pca.columns.tolist()[:-2]
 
@@ -537,7 +582,17 @@ class DataPreparation:
 
 
     @staticmethod
-    def calculate_job_size(train_failure_times, test_failure_times, val_failure_times):
+    def __calculate_job_size(train_failure_times, test_failure_times, val_failure_times):
+        """Calculate job size for use in progress bar.
+
+        :param train_failure_times: Failure times found in training data
+        :type: list of dates
+        :param test_failure_times: Failure times found in test data
+        :type: list of dates
+        :param val_failure_times: Failure times found in validation data
+        :return: job size
+        :type: int
+        """
         progress_adjustment_gen1 = -3
         progress_adjustment_gen2 = -19
         job_size = 0
