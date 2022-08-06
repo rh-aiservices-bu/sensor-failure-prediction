@@ -1,4 +1,5 @@
 let displayDataDiv = document.getElementById("displayDataDiv");
+let dataPrepStartBtn = document.getElementById('startBtn')
 window.onload = async function(){
     console.log("window.onload");
     let url = '/initData'
@@ -18,5 +19,6 @@ async function postInitData(url){
 function displayJson(jsonData){
    // Parse json, put values into html page elements
     displayDataDiv.innerHTML = jsonData.data;
+    dataPrepStartBtn.disabled = false;
 
 }
