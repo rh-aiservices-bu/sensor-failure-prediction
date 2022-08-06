@@ -29,6 +29,7 @@ class TrainManager:
         callback = LearningRateScheduler(TrainManager.scheduler)
         history = TrainManager.model.fit(X, y, epochs, batch_size, callbacks=[callback])
         TrainManager.model.save('static/trained_model')
+        #joblib.dump(TrainManager.model, 'static/trained_model')
 
         return history
 
