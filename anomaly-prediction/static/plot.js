@@ -19,7 +19,8 @@ let data = [{ // 0 Trace for Data points for sensor
         yaxis: 'y2',
         mode: 'lines',
         marker: {color: 'red', size: 1},
-        xaxis:{type: 'date'}
+        xaxis:{type: 'date'},
+        opacity: 0.4
     }];
 
 
