@@ -47,7 +47,7 @@ table{
     display: none;
   margin: 20px auto;
   width:400px;
-  height:600px;
+  height:700px;
   background-color:#f1f1f1;
   display:grid;
   grid-template-columns: 200px 200px;
@@ -193,4 +193,20 @@ fieldset{
     overflow: hidden;
     position: relative;
     border: none;
+}
+.predictContainer {
+
+    margin: 20px auto;
+    width: 400px;
+    height: 100px;
+    background-color: #f1f1f1;
+    display: grid;
+    grid-template-columns: 200px 200px;
+    grid-row: auto;
+    grid-column-gap: 20px;
+    grid-row-gap: 10px;
+}
+.predictGraphDiv{
+    border: 2px solid black;
+    height: 460px;
 }
