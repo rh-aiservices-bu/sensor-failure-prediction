@@ -2,7 +2,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Failure Prediction</title>
+    <title></title>
     <!--<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">-->
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
 
@@ -11,7 +11,7 @@
 </head>
 <body>
     <div class="mainDiv">
-        <h3>Failure Prediction</h3>
+        <h1>Failure Prediction</h1>
         <!-- Tab links -->
         <div class="tab">
             <!--Event Listenera for these buttons are set in btnControllers.js -->
@@ -29,7 +29,7 @@
                 <fieldset class="spanTwoCols">
                     <legend> Data Preparation Action</legend>
                     <div id="prepBtnContainer" class="spanTwoCols">
-                        <button id="startBtn">Start Data Prep</button>
+                        <button id="startBtn" disabled>Start Data Prep</button>
                         <button id="stopBtn">Stop Data Prep</button>
                     </div>
                     <div id="progressContainer" class="spanTwoCols">
@@ -66,8 +66,7 @@
                         <div class="trainLeft">
                             <label for="epochsSelect">Epochs</label>
                             <select id="epochsSelect" name="epochsSelect">
-                                <option value="10" selected>10</option>
-                                <option value="20">20</option>
+                                <option value="20" selected>20</option>
                                 <option value="30">30</option>
                                 <option value="40">40</option>
                                 <option value="50">50</option>
@@ -157,19 +156,16 @@
 
         <div id="tab4" class="tabcontent">
             <h3>Model Prediction</h3>
-            <div id="tab4PrepContainer" class="prepContainer">
+            <div id="tab4PrepContainer" class="predictContainer">
                 <fieldset class="spanTwoCols">
                     <legend> Data Preparation Action</legend>
                     <div id="prepBtnContainer" class="spanTwoCols">
                         <button id="startPredictBtn">Start Prediction Graph</button>
                         <button id="stopPredictBtn">Stop Prediction Graph</button>
                     </div>
-
                 </fieldset>
-
-
             </div>
-            <div id="predGraph"></div>
+            <div id="predGraph" class="predictGraphDiv"></div>
         </div>
 
     </div>
