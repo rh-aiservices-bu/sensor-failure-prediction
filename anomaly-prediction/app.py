@@ -85,12 +85,15 @@ def test_model():
 
 @app.route('/runPredict')
 def run_predict():
-    file_name = 'static/slice1.csv'
+    file_name = 'static/kaggle_prediction_data/prediction_slice1.csv'
     scaler_filename = 'static/training_scaler.gz'
     pca_filename = 'static/pca.gz'
+    means_filename = 'static/mean.gz'
+    bad_cols_filename = 'static/bad_cols.gz'
+    model_filename = 'static/trained_model/saved_model.pb'
     predict_window_size = 20
-    feature_names = ['sensor_25', 'sensor_11', 'sensor_36', 'sensor_34']
-    rtd = ProcessRealtimeData(predict_window_size, feature_names, scaler_filename, pca_filename, csv_filename=file_name)
+    rtd = ProcessRealtimeData(predict_window_size, scaler_filename, pca_filename,
+                              means_filename, bad_cols_filename, model_filename, csv_filename=file_name)
     rtd.process_points()
     return Response(rtd.process_points(), mimetype='text/event-stream')
 
