@@ -17,8 +17,11 @@ let data = [{ // 0 Trace for Data points for sensor
         x: [],
         y: [],
         yaxis: 'y2',
-        mode: 'lines',
-        marker: {color: 'red', size: 1},
+        //mode: 'lines',
+        type: 'bar',
+        //marker: {color: 'red', size: 1},
+        width: 1,
+        marker: {color: 'red'},
         xaxis:{type: 'date'},
         opacity: 0.4
     }];
@@ -44,7 +47,8 @@ let initData = [{ // 0 Trace for Data points for sensor
         x: [],
         y: [],
         yaxis: 'y2',
-        mode: 'lines',
+        //mode: 'lines',
+        type: 'bar',
         marker: {color: 'red', size: 1},
         xaxis:{type: 'date'}
     }];
@@ -63,7 +67,8 @@ let initData = [{ // 0 Trace for Data points for sensor
                  overlaying: 'y',
                  side: 'right',
                  range: [0, 1],
-                 zerolinecolor: 'red'
+                 zerolinecolor: 'red',
+                tickfont: {color: 'red'}
         },
         showlegend: false
 
@@ -87,7 +92,7 @@ var msgCounter = 0; // Another way of shifting. Not used in this code.
 function updatePlot(jsonData){
    // console.log("plot.js updatePlot()  " + jsonData);
     //console.log("msgCounter: " + msgCounter++);
-    let max = 200;
+    let max = 600;
     let jsonObj = JSON.parse(jsonData);  // json obj is in form:  ['timestamp', 'sensorVal']
  //           plot_dict = {
 //            'timestamp': one_row_df.index[0],
