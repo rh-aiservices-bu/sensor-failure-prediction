@@ -86,8 +86,7 @@ class ProcessRealtimeData:
                 predict_window_end = \
                     pd.to_datetime(row_as_df['timestamp'][0])  # Newest time
                 predict_window_start = \
-                    pd.to_datetime(predict_window_end - pd.Timedelta(seconds=60*(2 * self.predict_window_size - 1))) # Start 20 min before end
-
+                    pd.to_datetime(predict_window_end - pd.Timedelta(seconds=60*(2 * self.predict_window_size - 1)))
                 # df has index of timestamp
                 row_as_df.set_index('timestamp', inplace=True)
                 # Drop bad columns
@@ -106,7 +105,7 @@ class ProcessRealtimeData:
                 row_as_df['alarm'] = 0
                 # Add 'machine_status' temporarily since DataPreparation.transform_df_by_pca expects that column
                 row_as_df['machine_status'] = 0
-                # Transform with self.pca.  The resulting df has the same index as the row_as_df.
+                # Transform current data point with self.pca.  The resulting df has the same index as the row_as_df.
                 df_row_transformed = DataPreparation.transform_df_by_pca(self.pca, row_as_df,
                                                                       scaled_data, num_features)
                 row_as_df.drop('machine_status', axis=1, inplace=True)
@@ -134,12 +133,17 @@ class ProcessRealtimeData:
                     y_predict = self.model.predict(X).flatten()
                     # Get the last element of the y_predict list for plotting.  Last element in y_predict
                     # is the most current point which makes it the prediction point.
-                    json_data = self.__create_dict(df_predict_window, True, alarm_value=y_predict[19])
+                    #json_data = self.__create_dict(df_predict_window, True, alarm_value=y_predict[19])
+                    #json_data = self.__create_dict(df_predict_window, True, alarm_value=y_predict[self.predict_window_size - 1])
+                    json_data = self.__create_dict(df_predict_window.iloc[-1:], True,
+                                                   alarm_value=y_predict[self.predict_window_size - 1])
                     self.row_counter += 1
+                    #print("Buff full: {}".format(json_data))
                     yield "event: update\ndata: " + json.dumps(json_data) + "\n\n"
                 else: # buffer not yet filled, just plot sensor data with no prediction
                     self.row_counter += 1
                     json_data = self.__create_dict(df_row_transformed, False)
+                    #print("Buff NOT full: {}".format(json_data))
                     yield "event: update\ndata: " + json.dumps(json_data) + "\n\n"
 
     def __create_dict(self, one_row_df, alarm, alarm_value=None):
@@ -158,16 +162,12 @@ class ProcessRealtimeData:
         if alarm:
             alarm_val = alarm_value
         else:
-            alarm_val = None
-
+            alarm_val = 0
         plot_dict = {
-
-
             'timestamp': str(one_row_df.index[0]),
             'pc1': one_row_df['pc1'].values[0],
             'pc2': one_row_df['pc2'].values[0],
             'alarm': str(alarm_val)
-
         }
         return plot_dict
 
