@@ -1,5 +1,16 @@
 var graph = document.getElementById("predGraph");
-let data = [{ // 0 Trace for Data points for sensor
+let data = [
+    { // 2 Trace for alarm
+        x: [],
+        y: [],
+        yaxis: 'y2',   // Plotly naming convention. 'y2' in the data = 'yaxis2' in layout
+        type: 'bar',
+        width: 1,
+        marker: {color: 'red'},
+        xaxis:{type: 'date'},
+        opacity: 0.4
+    },
+    { // 0 Trace for Data points for sensor
         x: [],
         y: [],
         mode: 'markers',
@@ -12,44 +23,34 @@ let data = [{ // 0 Trace for Data points for sensor
         mode: 'markers',
         marker: {color: 'gray', size: 3},
         xaxis:{type: 'date'}
-    },
-    { // 2 Trace for alarm
-        x: [],
-        y: [],
-        yaxis: 'y2',
-        //mode: 'lines',
-        type: 'bar',
-        //marker: {color: 'red', size: 1},
-        width: 1,
-        marker: {color: 'red'},
-        xaxis:{type: 'date'},
-        opacity: 0.4
     }];
 
 
 // This array of empty traces is used whenever we need to restart a plot after it has been stopped.
 // Since the array is empty, the restarted plot will start with no data.
-let initData = [{ // 0 Trace for Data points for sensor
+let initData = [
+    { // Trace 0 for alarm
         x: [],
         y: [],
-        mode: 'markers',
-        marker: {color: 'gray', size: 3},
-        xaxis:{type: 'date'}
-    },
-    { // 1 Trace for Data points for sensor
-        x: [],
-        y: [],
-        mode: 'markers',
-        marker: {color: 'gray', size: 3},
-        xaxis:{type: 'date'}
-    },
-    { // 2 Trace for alarm
-        x: [],
-        y: [],
-        yaxis: 'y2',
-        //mode: 'lines',
+        yaxis: 'y2',  // Plotly naming convention. 'y2' in the data = 'yaxis2' in layout
         type: 'bar',
-        marker: {color: 'red', size: 1},
+        width: 1,
+        marker: {color: 'red'},
+        xaxis:{type: 'date'},
+        opacity: 0.4
+    },
+    { // Trace1 for Data points for sensor
+        x: [],
+        y: [],
+        mode: 'markers',
+        marker: {color: 'gray', size: 3},
+        xaxis:{type: 'date'}
+    },
+    { // Trace2 for Data points for sensor
+        x: [],
+        y: [],
+        mode: 'markers',
+        marker: {color: 'gray', size: 3},
         xaxis:{type: 'date'}
     }];
     let layout = {
@@ -92,30 +93,30 @@ var msgCounter = 0; // Another way of shifting. Not used in this code.
 function updatePlot(jsonData){
    // console.log("plot.js updatePlot()  " + jsonData);
     //console.log("msgCounter: " + msgCounter++);
-    let max = 600;
+    let max = 720;
     let jsonObj = JSON.parse(jsonData);  // json obj is in form:  ['timestamp', 'sensorVal']
+    // For reference this is how the dictionary is created on the server side.
  //           plot_dict = {
 //            'timestamp': one_row_df.index[0],
 //            'pc1': one_row_df['pc1'].values[0],
 //            'pc2': one_row_df['pc2'].values[0],
 //            'alarm': alarm_value
 //        }
-
+    // Unpack json
     let timestamp = jsonObj.timestamp;
     let pc1 = jsonObj.pc1;
     let pc2 = jsonObj.pc2;
     let alarm =    jsonObj.alarm;
-
-
-
     // Note there are three traces.  The first two traces use the same layout named yaxis.
     // The first two traces plot the values of the two chosen pc's
     // The third trace uses the layout named yaxis2.  This naming convention follows that of plotly.js
     // The third trace plots vertical red lines showing the predictions
     Plotly.extendTraces('predGraph', {
 
-        x: [[timestamp], [timestamp], [timestamp, timestamp] ],
-        y: [[pc1], [pc2], [0, alarm]]
+        //x: [[timestamp], [timestamp], [timestamp, timestamp] ],
+        //y: [[pc1], [pc2], [0, alarm]]
+        x: [[timestamp], [timestamp], [timestamp]],
+        y: [[alarm], [pc1], [pc2]]
 
     }, [0, 1, 2], max);  // The array denotes to plot all three traces(0 based).  Keep only last max data points
 
