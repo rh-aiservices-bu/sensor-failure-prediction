@@ -546,7 +546,7 @@ class DataPreparation:
         test_failure_times = DataPreparation.get_failure_times(DataPreparation.df_test_pca)
         val_failure_times = DataPreparation.get_failure_times(DataPreparation.df_val_pca)
 
-        DataPreparation.job_size = DataPreparation.calculate_job_size(train_failure_times, test_failure_times,
+        DataPreparation.job_size = DataPreparation.__calculate_job_size(train_failure_times, test_failure_times,
                                                                       val_failure_times)
 
         print("Calculated job size:  {}".format(DataPreparation.job_size))
