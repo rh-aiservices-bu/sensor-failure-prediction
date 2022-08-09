@@ -1,5 +1,5 @@
 function trainGraph(){
-    console.log("trainGraph()");
+    //console.log("trainGraph()");
     graphDivObj.innerHTML = "<img src='static/workingMsg.png'/>";
     let url = '/train-model';
     let formObj = document.getElementById("trainForm")
@@ -21,6 +21,8 @@ function displayTrainGraphHTML(serializedImage){
     let graphHTML =  "<img src='data:image/png;base64, " + serializedImage +
         "' class='imgSize'/>" ;
     graphDivObj.innerHTML = graphHTML;
+    testTabBtn.disabled = false;
+    predTabBtn.disabled = false;
 }
 
 
