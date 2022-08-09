@@ -20,5 +20,6 @@ function displayJson(jsonData){
    // Parse json, put values into html page elements
     displayDataDiv.innerHTML = jsonData.data;
     dataPrepStartBtn.disabled = false;
+    onloadDataCheck();
 
 }
