@@ -33,6 +33,7 @@ function displayTestGraphHTML(graphHTML){
 		iFrameDoc.writeln(graphHTML);
 		iFrameDoc.close();
 	}
+	predTabBtn.disabled = false;
 }
 
 
