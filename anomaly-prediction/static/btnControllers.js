@@ -15,7 +15,7 @@ let predictStopBtn = document.getElementById('stopPredictBtn');
 
 // Event Listeners for tab buttons
 dataTabBtn.addEventListener("click", function(){
-    openTab(this, 'tab1'); onloadDataCheck();
+    openTab(this, 'tab1'); // onloadDataCheck();
 });
 trainTabBtn.addEventListener("click", function(){
     openTab(this, 'tab2')
