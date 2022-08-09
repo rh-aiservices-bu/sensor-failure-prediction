@@ -47,6 +47,7 @@ function startProcess(){
         console.log("Job finished, closing EventSource")
         eventSource.close();
         startBtnObj.disabled = false;
+        trainTabBtn.disabled = false;
     }, false);
 
 
