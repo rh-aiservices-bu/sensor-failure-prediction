@@ -32,7 +32,8 @@ startDataPrepBtn.addEventListener('click', function(){
 
 
 
-// When the Start Data Prep btn is clicked, Disable train tab, test tab, and predict tab
+// When the Start Data Prep btn is clicked, Disable train tab, test tab, and predict tab since
+// all saved working data will be re calculated
 function startDataPrepControlButtons(){
     trainTabBtn.disabled = true;
     testTabBtn.disabled = true;
