@@ -1,6 +1,9 @@
 function testGraph(){
-    console.log("testGraph()");
-    graphDivObj.innerHTML = "<img src='static/workingMsg.png'/>";
+    testGraphBtnObj.disabled = true;
+    // Clear iframe
+    testGraphIFrameObj.contentWindow.location.replace('about:blank');
+    //testGraphIFrameObj.src='/working';
+    //testGraphIFrameObj.contentWindow.location.replace('working.html');
     let url = '/test-model';
     let formObj = document.getElementById("testForm")
     let formData = new FormData(formObj);
@@ -27,6 +30,7 @@ function displayTestGraphHTML(graphHTML){
 		iFrameDoc = testGraphIFrameObj.contentDocument;
 	}else if(testGraphIFrameObj.contentWindow){
 		iFrameDoc = testGraphIFrameObj.contentWindow.document;
+		//testGraphIFrameObj.contentWindow.location.replace('about:blank');
 	}
 	if(iFrameDoc){
 		iFrameDoc.open();
@@ -34,6 +38,7 @@ function displayTestGraphHTML(graphHTML){
 		iFrameDoc.close();
 	}
 	predTabBtn.disabled = false;
+	testGraphBtnObj.disabled = false;
 }
 
 
