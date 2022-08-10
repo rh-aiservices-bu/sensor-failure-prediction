@@ -35,7 +35,7 @@ async function doTwoFilesExist(fileName1, fileName2){
 
 }
 // When Data Prep tab is clicked, first determined if model has already been trained and scaler exists.
-// If both exist, enable Prediction Tab
+// If both exist, enable Train Tab, Test Tab and Prediction Tab
 function onloadDataCheck(){
     let fileName1 = 'static/trained_model/saved_model.pb';
     let fileName2 = 'static/training_scaler.gz'
@@ -45,8 +45,12 @@ function onloadDataCheck(){
     dataPresent.then(function(result){  // The variable, dataPresent is a Promise,
     if(result){
         predTabBtn.disabled = false;
+        testTabBtn.disabled = false;
+        trainTabBtn.disabled = false;
     }else{
         predTabBtn.disabled = true;  // This could be redundant since when page loads, the btn is disabled.
+        testTabBtn.disabled = true;
+        trainTabBtn.disabled = true;
     }
     });
 
