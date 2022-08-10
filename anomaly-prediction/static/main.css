@@ -176,6 +176,12 @@ input[type=checkbox]{
 }
 fieldset{
     margin: 20px;
+
+}
+.predictFieldset{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    grid-column: span 2;
 }
 .trainBtnContainer{
     margin: 20px;
@@ -196,9 +202,9 @@ fieldset{
 }
 .predictContainer {
 
-    margin: 20px auto;
+    margin: 10px auto;
     width: 400px;
-    height: 100px;
+    height: 250px;
     background-color: #f1f1f1;
     display: grid;
     grid-template-columns: 200px 200px;
@@ -208,5 +214,5 @@ fieldset{
 }
 .predictGraphDiv{
     border: 2px solid black;
-    height: 460px;
+    height: 350px;
 }
